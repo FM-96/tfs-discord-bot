@@ -16,6 +16,7 @@
     "discord.js": "^11.5.1",
     "dotenv": "^8.0.0",
     "googleapis": "^40.0.0",
+    "got": "^9.6.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
