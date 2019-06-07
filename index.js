@@ -14,7 +14,12 @@ const youtube = require('./youtube.js');
 const client = new discord.Client();
 
 client.once('ready', () => {
-	setInterval(checkYouTubeAvatar, process.env.YOUTUBE_POLLING_INTERVAL * 1000);
+	if (process.env.YOUTUBE_ICON_SYNC === 'true') {
+		logger.debug('YouTube icon synchronization turned on');
+		setInterval(checkYouTubeAvatar, process.env.YOUTUBE_POLLING_INTERVAL * 1000);
+	} else {
+		logger.debug('YouTube icon synchronization turned off');
+	}
 });
 
 client.on('ready', () => {
