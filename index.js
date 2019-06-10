@@ -14,7 +14,7 @@ const youtube = require('./youtube.js');
 const client = new discord.Client();
 
 client.once('ready', () => {
-	if (process.env.YOUTUBE_ICON_SYNC === 'true') {
+	if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true' || process.env.YOUTUBE_BOT_AVATAR_SYNC === 'true') {
 		logger.debug('YouTube icon synchronization turned on');
 		setInterval(checkYouTubeAvatar, process.env.YOUTUBE_POLLING_INTERVAL * 1000);
 	} else {
@@ -71,27 +71,32 @@ async function checkYouTubeAvatar() {
 		logger.info(`Changed avatar detected for YouTube channel "${channelName}"`);
 
 		// update guild icons
-		const guildIds = process.env.DISCORD_GUILDS.split(',');
-		for (const guildId of guildIds) {
-			const guild = client.guilds.get(guildId);
-			if (!guild) {
-				logger.warn(`Bot is not in guild ${guildId}, skipping`);
-				continue;
-			}
-			try {
-				await guild.setIcon(avatarBuffer, `Syncing guild icon with YouTube Channel "${channelName}"`);
-				logger.verbose(`Changed guild icon for "${guild.name}" (${guild.id})`);
-			} catch (err) {
-				if (err.message === 'Missing Permissions') {
-					logger.error(`Missing permissions in guild "${guild.name}" (${guild.id}), skipping`);
-				} else {
-					throw err;
+		if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true') {
+			const guildIds = process.env.DISCORD_GUILDS.split(',');
+			for (const guildId of guildIds) {
+				const guild = client.guilds.get(guildId);
+				if (!guild) {
+					logger.warn(`Bot is not in guild ${guildId}, skipping`);
+					continue;
+				}
+				try {
+					await guild.setIcon(avatarBuffer, `Syncing guild icon with YouTube Channel "${channelName}"`);
+					logger.verbose(`Changed guild icon for "${guild.name}" (${guild.id})`);
+				} catch (err) {
+					if (err.message === 'Missing Permissions') {
+						logger.error(`Missing permissions in guild "${guild.name}" (${guild.id}), skipping`);
+					} else {
+						throw err;
+					}
 				}
 			}
 		}
 
 		// update bot avatar
-		await client.user.setAvatar(avatarBuffer);
+		if (process.env.YOUTUBE_BOT_AVATAR_SYNC === 'true') {
+			await client.user.setAvatar(avatarBuffer);
+			logger.verbose('Changed bot avatar');
+		}
 	} catch (err) {
 		logger.error('Error while checking YouTube channel:');
 		logger.error(err);
