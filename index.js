@@ -72,7 +72,7 @@ async function checkYouTubeAvatar() {
 
 		// update guild icons
 		if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true') {
-			const guildIds = process.env.DISCORD_GUILDS.split(',');
+			const guildIds = process.env.ICON_SYNC_GUILDS.split(',');
 			for (const guildId of guildIds) {
 				const guild = client.guilds.get(guildId);
 				if (!guild) {
