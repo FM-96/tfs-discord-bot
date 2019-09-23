@@ -11,6 +11,22 @@ const path = require('path');
 
 const youtube = require('./youtube.js');
 
+const levelUpConfig = {};
+for (const guildConfig of process.env.LEVELUP_ROLES.split(',')) {
+	const [guild, roles] = guildConfig.split(':');
+	levelUpConfig[guild] = {};
+	for (const roleConfig of roles.split(' ')) {
+		const [level, role] = roleConfig.split('=');
+		levelUpConfig[guild][level] = role;
+	}
+}
+
+const loggingChannels = {};
+for (const guildConfig of process.env.LOGGING_CHANNELS.split(',')) {
+	const [guild, channel] = guildConfig.split(':');
+	loggingChannels[guild] = channel;
+}
+
 const client = new discord.Client();
 
 client.once('ready', () => {
@@ -24,6 +40,39 @@ client.once('ready', () => {
 
 client.on('ready', () => {
 	logger.info('Successfully logged in');
+});
+
+client.on('message', async message => {
+	// level-up roles
+	try {
+		if (message.author.id === process.env.LEVELUP_BOT && message.guild && levelUpConfig[message.guild.id]) {
+			const levelUpMessage = new RegExp(process.env.LEVELUP_MESSAGE);
+			const match = message.content.match(levelUpMessage);
+			if (match) {
+				const [, userId, level] = match;
+				const roleId = levelUpConfig[message.guild.id][level];
+				if (roleId) {
+					const user = await client.fetchUser(userId);
+					const member = await message.guild.fetchMember(user);
+					const role = message.guild.roles.get(roleId);
+					await member.addRole(role);
+					const loggingChannel = client.channels.get(loggingChannels[message.guild.id]);
+					if (loggingChannel) {
+						const embed = new discord.RichEmbed()
+							.setAuthor(user.tag, user.avatarURL)
+							.setDescription(`${member} reached level ${level} and was added to ${role}.`)
+							.setColor(role.color)
+							.setFooter(`ID: ${user.id}`)
+							.setTimestamp();
+						await loggingChannel.send(embed);
+					}
+				}
+			}
+		}
+	} catch (err) {
+		logger.error(`Error while processing level-up for guild "${message.guild.name}" (${message.guild.id}):`);
+		logger.error(err);
+	}
 });
 
 client.login(process.env.BOT_TOKEN).catch(err => {
