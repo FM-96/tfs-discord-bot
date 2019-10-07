@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
+const commandHandler = require('./commandHandler.js');
 const youtube = require('./youtube.js');
 
 const levelUpConfig = {};
@@ -27,9 +28,36 @@ for (const guildConfig of process.env.LOGGING_CHANNELS.split(',')) {
 	loggingChannels[guild] = channel;
 }
 
+commandHandler.setOwnerId(process.env.OWNER_ID);
+commandHandler.setGlobalPrefixes(false);
+
+// register commands
+try {
+	const registerResults = commandHandler.registerCommandsFolder(path.join(__dirname, '.', 'commands'));
+	logger.info(`${registerResults.registered} commands registered`);
+	logger.info(`${registerResults.disabled} commands disabled`);
+} catch (err) {
+	logger.fatal('Error while registering commands:');
+	logger.fatal(err);
+	process.exit(1);
+}
+
+// register tasks
+try {
+	const registerResults = commandHandler.registerTasksFolder(path.join(__dirname, '.', 'tasks'));
+	logger.info(`${registerResults.registered} tasks registered`);
+	logger.info(`${registerResults.disabled} tasks disabled`);
+} catch (err) {
+	logger.fatal('Error while registering tasks:');
+	logger.fatal(err);
+	process.exit(1);
+}
+
 const client = new discord.Client();
 
 client.once('ready', () => {
+	commandHandler.setGlobalPrefixes([`<@${client.user.id}> `, `<@!${client.user.id}> `, process.env.PREFIX]);
+
 	if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true' || process.env.YOUTUBE_BOT_AVATAR_SYNC === 'true') {
 		logger.debug('YouTube icon synchronization turned on');
 		setInterval(checkYouTubeAvatar, process.env.YOUTUBE_POLLING_INTERVAL * 1000);
@@ -72,6 +100,24 @@ client.on('message', async message => {
 	} catch (err) {
 		logger.error(`Error while processing level-up for guild "${message.guild.name}" (${message.guild.id}):`);
 		logger.error(err);
+	}
+
+	// explicit commands
+	let commandMatch = false;
+	try {
+		const commandResults = await commandHandler.checkCommand(message);
+		commandMatch = commandResults.match;
+	} catch (err) {
+		console.error('Error while checking commands:');
+		console.error(err);
+	}
+
+	// tasks (i.e. context commmands)
+	try {
+		await commandHandler.checkTasks(message, commandMatch);
+	} catch (err) {
+		console.error('Error while checking tasks:');
+		console.error(err);
 	}
 });
 
