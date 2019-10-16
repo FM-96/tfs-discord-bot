@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const commandHandler = require('./commandHandler.js');
+const reactionHandler = require('./reactionHandler.js');
 const youtube = require('./youtube.js');
 
 commandHandler.setOwnerId(process.env.OWNER_ID);
@@ -71,6 +72,37 @@ client.on('message', async message => {
 	} catch (err) {
 		console.error('Error while checking tasks:');
 		console.error(err);
+	}
+});
+
+// emit messageReactionAdd event for uncached messages
+client.on('raw', async function (event) {
+	if (event.t !== 'MESSAGE_REACTION_ADD') {
+		return;
+	}
+
+	const {d: data} = event;
+	const channel = client.channels.get(data.channel_id);
+
+	if (channel.messages.has(data.message_id)) {
+		return;
+	}
+
+	const user = client.users.get(data.user_id);
+	const message = await channel.fetchMessage(data.message_id);
+
+	const emojiKey = (data.emoji.id) ? `${data.emoji.name}:${data.emoji.id}` : data.emoji.name;
+	const reaction = message.reactions.get(emojiKey);
+
+	client.emit('messageReactionAdd', reaction, user);
+});
+
+client.on('messageReactionAdd', async (reaction, user) => {
+	try {
+		await reactionHandler.runReactionListeners(reaction, user);
+	} catch (err) {
+		logger.error('Error while processing reaction listeners:');
+		logger.error(err);
 	}
 });
 
