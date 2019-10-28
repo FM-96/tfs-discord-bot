@@ -1,4 +1,5 @@
 const discord = require('discord.js');
+const logger = require('winston').loggers.get('default');
 const schedule = require('node-schedule');
 
 const reactionHandler = require('../reactionHandler.js');
@@ -66,41 +67,46 @@ module.exports = {
 
 if (!module.exports.disabled) {
 	schedule.scheduleJob('0 * * * *', async () => {
-		// find expired suggestions
-		for (const guildId of Object.keys(suggestions)) {
-			for (const messageId of Object.keys(suggestions[guildId])) {
-				if (Date.now() >= suggestions[guildId][messageId].timestamp) {
-					const channel = global.client.channels.get(suggestions[guildId][messageId].channelId);
-					if (!channel) {
-						delete suggestions[guildId][messageId];
-						continue;
-					}
-					const message = await channel.fetchMessage(messageId);
-					const oldEmbed = message.embeds[0];
-					const results = {total: 0};
-					for (const reaction of message.reactions.array()) {
-						if (['👍', '🤷', '👎'].includes(reaction.emoji.name)) {
-							await reaction.fetchUsers();
-							const votes = reaction.users.filter(e => !e.bot).size;
-							results[reaction.emoji.name] = votes;
-							results.total += votes;
+		try {
+			// find expired suggestions
+			for (const guildId of Object.keys(suggestions)) {
+				for (const messageId of Object.keys(suggestions[guildId])) {
+					if (Date.now() >= suggestions[guildId][messageId].timestamp) {
+						const channel = global.client.channels.get(suggestions[guildId][messageId].channelId);
+						if (!channel) {
+							delete suggestions[guildId][messageId];
+							continue;
 						}
+						const message = await channel.fetchMessage(messageId);
+						const oldEmbed = message.embeds[0];
+						const results = {total: 0};
+						for (const reaction of message.reactions.array()) {
+							if (['👍', '🤷', '👎'].includes(reaction.emoji.name)) {
+								await reaction.fetchUsers();
+								const votes = reaction.users.filter(e => !e.bot).size;
+								results[reaction.emoji.name] = votes;
+								results.total += votes;
+							}
+						}
+						// edit with vote results
+						const newEmbed = new discord.RichEmbed()
+							.setAuthor(oldEmbed.author.name, oldEmbed.author.iconURL)
+							.setTitle(oldEmbed.title)
+							.setDescription(oldEmbed.description)
+							.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e]} (${Math.round((results[e] / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`)
+							.setFooter('Suggestion closed at:')
+							.setTimestamp(oldEmbed.timestamp);
+						await message.edit(newEmbed);
+						// TODO save exact results
+						await message.clearReactions();
+						delete suggestions[guildId][messageId];
+						// TODO logging
 					}
-					// edit with vote results
-					const newEmbed = new discord.RichEmbed()
-						.setAuthor(oldEmbed.author.name, oldEmbed.author.iconURL)
-						.setTitle(oldEmbed.title)
-						.setDescription(oldEmbed.description)
-						.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e]} (${Math.round((results[e] / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`)
-						.setFooter('Suggestion closed at:')
-						.setTimestamp(oldEmbed.timestamp);
-					await message.edit(newEmbed);
-					// TODO save exact results
-					await message.clearReactions();
-					delete suggestions[guildId][messageId];
-					// TODO logging
 				}
 			}
+		} catch (err) {
+			logger.error('Error when processing suggestions:');
+			logger.error(err);
 		}
 	});
 
