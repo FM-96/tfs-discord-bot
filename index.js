@@ -41,6 +41,7 @@ try {
 const client = new discord.Client();
 
 client.once('ready', () => {
+	global.client = client;
 	commandHandler.setGlobalPrefixes([`<@${client.user.id}> `, `<@!${client.user.id}> `, process.env.PREFIX]);
 
 	if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true' || process.env.YOUTUBE_BOT_AVATAR_SYNC === 'true') {
