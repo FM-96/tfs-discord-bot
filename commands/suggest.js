@@ -3,15 +3,13 @@ const logger = require('winston').loggers.get('default');
 const schedule = require('node-schedule');
 
 const reactionHandler = require('../reactionHandler.js');
+const Suggestion = require('../models/Suggestion.js');
 
 const suggestionChannels = {};
 for (const guildConfig of process.env.SUGGESTION_CHANNELS.split(',')) {
 	const [guild, channel] = guildConfig.split(':');
 	suggestionChannels[guild] = channel;
 }
-
-// TODO temporary until proper database support
-const suggestions = {};
 
 module.exports = {
 	command: 'suggest',
@@ -52,14 +50,13 @@ module.exports = {
 		await sentMessage.react('🤷');
 		await sentMessage.react('👎');
 
-		// TODO save message in database
-		if (!suggestions[message.guild.id]) {
-			suggestions[message.guild.id] = {};
-		}
-		suggestions[message.guild.id][sentMessage.id] = {
+		const suggestion = new Suggestion({
+			guildId: sentMessage.guild.id,
 			channelId: sentMessage.channel.id,
-			timestamp: endTime,
-		};
+			messageId: sentMessage.id,
+			endTime,
+		});
+		await suggestion.save();
 
 		// TODO logging
 	},
@@ -69,40 +66,48 @@ if (!module.exports.disabled) {
 	schedule.scheduleJob('0 * * * *', async () => {
 		try {
 			// find expired suggestions
-			for (const guildId of Object.keys(suggestions)) {
-				for (const messageId of Object.keys(suggestions[guildId])) {
-					if (Date.now() >= suggestions[guildId][messageId].timestamp) {
-						const channel = global.client.channels.get(suggestions[guildId][messageId].channelId);
-						if (!channel) {
-							delete suggestions[guildId][messageId];
-							continue;
-						}
-						const message = await channel.fetchMessage(messageId);
-						const oldEmbed = message.embeds[0];
-						const results = {total: 0};
-						for (const reaction of message.reactions.array()) {
-							if (['👍', '🤷', '👎'].includes(reaction.emoji.name)) {
-								await reaction.fetchUsers();
-								const votes = reaction.users.filter(e => !e.bot).size;
-								results[reaction.emoji.name] = votes;
-								results.total += votes;
-							}
-						}
-						// edit with vote results
-						const newEmbed = new discord.RichEmbed()
-							.setAuthor(oldEmbed.author.name, oldEmbed.author.iconURL)
-							.setTitle(oldEmbed.title)
-							.setDescription(oldEmbed.description)
-							.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e]} (${Math.round((results[e] / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`)
-							.setFooter('Suggestion closed at:')
-							.setTimestamp(oldEmbed.timestamp);
-						await message.edit(newEmbed);
-						// TODO save exact results
-						await message.clearReactions();
-						delete suggestions[guildId][messageId];
-						// TODO logging
+			const suggestions = await Suggestion.find({endTime: {$lt: Date.now()}}).exec();
+			for (const suggestion of suggestions) {
+				const channel = global.client.channels.get(suggestion.channelId);
+				if (!channel) {
+					logger.warn(`Channel ${suggestion.channelId} no longer accessible`);
+					await suggestion.remove();
+					continue;
+				}
+				let message;
+				try {
+					message = await channel.fetchMessage(suggestion.messageId);
+				} catch (err) {
+					if (err.message === 'Unknown Message') {
+						logger.warn(`Message ${suggestion.messagelId} has been deleted`);
+						await suggestion.remove();
+						continue;
+					}
+					throw err;
+				}
+				const oldEmbed = message.embeds[0];
+				const results = {total: 0};
+				for (const reaction of message.reactions.array()) {
+					if (['👍', '🤷', '👎'].includes(reaction.emoji.name)) {
+						await reaction.fetchUsers();
+						const votes = reaction.users.filter(e => !e.bot).size;
+						results[reaction.emoji.name] = votes;
+						results.total += votes;
 					}
 				}
+				// edit with vote results
+				const newEmbed = new discord.RichEmbed()
+					.setAuthor(oldEmbed.author.name, oldEmbed.author.iconURL)
+					.setTitle(oldEmbed.title)
+					.setDescription(oldEmbed.description)
+					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e]} (${Math.round((results[e] / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`)
+					.setFooter('Suggestion closed at:')
+					.setTimestamp(oldEmbed.timestamp);
+				await message.edit(newEmbed);
+				// TODO save exact results
+				await message.clearReactions();
+				await suggestion.remove();
+				// TODO logging
 			}
 		} catch (err) {
 			logger.error('Error when processing suggestions:');

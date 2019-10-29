@@ -4,6 +4,7 @@ require('./configureLogger.js');
 const discord = require('discord.js');
 const got = require('got');
 const logger = require('winston').loggers.get('default');
+const mongoose = require('mongoose');
 
 const crypto = require('crypto');
 const fs = require('fs');
@@ -107,7 +108,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 	}
 });
 
-client.login(process.env.BOT_TOKEN).catch(err => {
+mongoose.connect(process.env.MONGODB, {useNewUrlParser: true, useUnifiedTopology: true}).then(() => client.login(process.env.BOT_TOKEN)).catch(err => {
 	logger.fatal('Error logging in:');
 	logger.fatal(err);
 	process.exit(1);
