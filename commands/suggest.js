@@ -116,7 +116,11 @@ if (!module.exports.disabled) {
 	});
 
 	reactionHandler.addReactionListener('suggest', async (reaction, user) => {
-		if (reaction.message.channel.id !== suggestionChannels[reaction.message.guild.id] || user.id === reaction.message.client.user.id) {
+		if (user.id === reaction.message.client.user.id) {
+			return;
+		}
+		const isSuggestion = await Suggestion.exists({messageId: reaction.message.id});
+		if (!isSuggestion) {
 			return;
 		}
 		// allow only 1 reaction per message per user
