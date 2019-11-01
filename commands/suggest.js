@@ -38,9 +38,9 @@ module.exports = {
 		const endHour = endTime + (HOUR - (endTime % HOUR)); // next full hour after endTime
 
 		const embed = new discord.RichEmbed()
-			.setAuthor(message.author.tag, message.author.avatarURL)
 			.setTitle('Suggestion')
 			.setDescription(message.content.slice(context.argsOffset).trim())
+			.addField('Suggested by', `${message.author} ${message.author.tag} (${message.author.id})`)
 			.addField('Instructions', '👍 = I **want** this to happen.\n🤷 = I **don\'t care** whether this happens.\n👎 = I **don\'t want** this to happen.')
 			.setFooter('Votes are open until:')
 			.setTimestamp(endHour);
@@ -97,9 +97,9 @@ if (!module.exports.disabled) {
 				}
 				// edit with vote results
 				const newEmbed = new discord.RichEmbed()
-					.setAuthor(oldEmbed.author.name, oldEmbed.author.iconURL)
 					.setTitle(oldEmbed.title)
 					.setDescription(oldEmbed.description)
+					.addField('Suggested by', oldEmbed.fields[0].value)
 					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e]} (${Math.round((results[e] / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`)
 					.setFooter('Suggestion closed at:')
 					.setTimestamp(oldEmbed.timestamp);
