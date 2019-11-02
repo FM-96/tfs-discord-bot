@@ -38,6 +38,7 @@ module.exports = {
 		const endHour = endTime + (HOUR - (endTime % HOUR)); // next full hour after endTime
 
 		const embed = new discord.RichEmbed()
+			.setColor(0x005AB5)
 			.setTitle('Suggestion')
 			.setDescription(message.content.slice(context.argsOffset).trim())
 			.addField('Suggested by', `${message.author} ${message.author.tag} (${message.author.id})`)
@@ -97,6 +98,7 @@ if (!module.exports.disabled) {
 				}
 				// edit with vote results
 				const newEmbed = new discord.RichEmbed()
+					.setColor(0xDC3220)
 					.setTitle(oldEmbed.title)
 					.setDescription(oldEmbed.description)
 					.addField('Suggested by', oldEmbed.fields[0].value)
