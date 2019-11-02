@@ -11,6 +11,12 @@ for (const guildConfig of process.env.SUGGESTION_CHANNELS.split(',')) {
 	suggestionChannels[guild] = channel;
 }
 
+const loggingChannels = {};
+for (const guildConfig of process.env.LOGGING_CHANNELS.split(',')) {
+	const [guild, channel] = guildConfig.split(':');
+	loggingChannels[guild] = channel;
+}
+
 module.exports = {
 	command: 'suggest',
 	aliases: [],
@@ -59,7 +65,11 @@ module.exports = {
 		});
 		await suggestion.save();
 
-		// TODO logging
+		const loggingChannel = message.client.channels.get(loggingChannels[message.guild.id]);
+		if (loggingChannel) {
+			embed.fields.splice(1, 1); // remove instructions field
+			await loggingChannel.send(embed);
+		}
 	},
 };
 
@@ -91,9 +101,9 @@ if (!module.exports.disabled) {
 				for (const reaction of message.reactions.array()) {
 					if (['👍', '🤷', '👎'].includes(reaction.emoji.name)) {
 						await reaction.fetchUsers();
-						const votes = reaction.users.filter(e => !e.bot).size;
+						const votes = reaction.users.filter(e => !e.bot);
 						results[reaction.emoji.name] = votes;
-						results.total += votes;
+						results.total += votes.size;
 					}
 				}
 				// edit with vote results
@@ -102,14 +112,24 @@ if (!module.exports.disabled) {
 					.setTitle(oldEmbed.title)
 					.setDescription(oldEmbed.description)
 					.addField('Suggested by', oldEmbed.fields[0].value)
-					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e]} (${Math.round((results[e] / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`)
+					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e].size} (${Math.round((results[e].size / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`)
 					.setFooter('Suggestion closed at:')
 					.setTimestamp(oldEmbed.timestamp);
 				await message.edit(newEmbed);
-				// TODO save exact results
 				await message.clearReactions();
 				await suggestion.remove();
-				// TODO logging
+
+				const loggingChannel = message.client.channels.get(loggingChannels[message.guild.id]);
+				if (loggingChannel) {
+					const fullResults = ['👍', '🤷', '👎'].map((e, i) => `${['+1', 'shrug', '-1'][i]}:\n` + results[e].map(f => `${f.tag} (${f.id})`).join('\n')).join('\n\n');
+					await loggingChannel.send({
+						embed: newEmbed,
+						files: [{
+							attachment: Buffer.from(fullResults),
+							name: `votes-${message.id}.txt`,
+						}],
+					});
+				}
 			}
 		} catch (err) {
 			logger.error('Error when processing suggestions:');
