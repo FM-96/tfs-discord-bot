@@ -90,7 +90,7 @@ if (!module.exports.disabled) {
 					message = await channel.fetchMessage(suggestion.messageId);
 				} catch (err) {
 					if (err.message === 'Unknown Message') {
-						logger.warn(`Message ${suggestion.messagelId} has been deleted`);
+						logger.warn(`Suggestion message ${suggestion.messageId} has been deleted`);
 						await suggestion.remove();
 						continue;
 					}
