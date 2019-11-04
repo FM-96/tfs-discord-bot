@@ -123,7 +123,7 @@ if (!module.exports.disabled) {
 					.setDescription(oldEmbed.description)
 					.addField('Suggested by', oldEmbed.fields[0].value)
 					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e].size} (${Math.round((results[e].size / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`)
-					.setFooter('Suggestion closed at:')
+					.setFooter('Votes closed at:')
 					.setTimestamp(oldEmbed.timestamp);
 				await message.edit(newEmbed);
 				await message.clearReactions();
