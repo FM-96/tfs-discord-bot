@@ -47,7 +47,7 @@ module.exports = {
 			.setColor(0x005AB5)
 			.setTitle('Suggestion')
 			.setDescription(message.content.slice(context.argsOffset).trim())
-			.addField('Suggested by', `${message.author} ${message.author.tag} (${message.author.id})`)
+			.addField('Suggested by', `${message.author} ${message.author.tag}`)
 			.addField('Instructions', '👍 = I **want** this to happen.\n🤷 = I **don\'t care** whether this happens.\n👎 = I **don\'t want** this to happen.')
 			.setFooter('Votes are open until:')
 			.setTimestamp(endHour);
@@ -67,6 +67,7 @@ module.exports = {
 
 		const loggingChannel = message.client.channels.get(loggingChannels[message.guild.id]);
 		if (loggingChannel) {
+			embed.fields[0].value = embed.fields[0].value.replace(/$/, ` (${message.author.id})`); // add suggester ID
 			embed.fields.splice(1, 1); // remove instructions field
 			await loggingChannel.send(embed);
 		}
@@ -122,6 +123,7 @@ if (!module.exports.disabled) {
 				const loggingChannel = message.client.channels.get(loggingChannels[message.guild.id]);
 				if (loggingChannel) {
 					const fullResults = ['👍', '🤷', '👎'].map((e, i) => `${['+1', 'shrug', '-1'][i]}:\n` + results[e].map(f => `${f.tag} (${f.id})`).join('\n')).join('\n\n');
+					newEmbed.fields[0].value = newEmbed.fields[0].value.replace(/$/, ` (${message.author.id})`); // add suggester ID
 					await loggingChannel.send({
 						embed: newEmbed,
 						files: [{
