@@ -53,9 +53,9 @@ module.exports = {
 			.setTimestamp(endHour);
 		const sentMessage = await message.channel.send(embed);
 		await message.delete();
-		await sentMessage.react('👍');
-		await sentMessage.react('🤷');
-		await sentMessage.react('👎');
+
+		const reactions = sentMessage.react('👍').then(() => sentMessage.react('🤷')).then(() => sentMessage.react('👎'));
+		reactions.catch(() => {/* noop */}); // prevent "Promise rejection was handled asynchronously" warning
 
 		const suggestion = new Suggestion({
 			guildId: sentMessage.guild.id,
@@ -71,6 +71,8 @@ module.exports = {
 			embed.fields.splice(1, 1); // remove instructions field
 			await loggingChannel.send(embed);
 		}
+
+		await reactions;
 	},
 };
 
