@@ -43,10 +43,17 @@ module.exports = {
 		const endTime = Date.now() + (process.env.VOTE_TIME_HOURS * 60 * 60 * 1000);
 		const endHour = endTime + (HOUR - (endTime % HOUR)); // next full hour after endTime
 
+		const suggestionText = message.content.slice(context.argsOffset).trim();
+		if (!suggestionText) {
+			const reply = await message.channel.send(`${message.author}, please enter a suggestion text.`);
+			await Promise.all([message.delete(), reply.delete(5000)]);
+			return;
+		}
+
 		const embed = new discord.RichEmbed()
 			.setColor(0x005AB5)
 			.setTitle('Suggestion')
-			.setDescription(message.content.slice(context.argsOffset).trim())
+			.setDescription(suggestionText)
 			.addField('Suggested by', `${message.author} ${message.author.tag}`)
 			.addField('Instructions', '👍 = I **want** this to happen.\n🤷 = I **don\'t care** whether this happens.\n👎 = I **don\'t want** this to happen.')
 			.setFooter('Votes are open until:')
