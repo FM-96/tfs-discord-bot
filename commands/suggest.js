@@ -55,7 +55,7 @@ module.exports = {
 			.setTitle('Suggestion')
 			.setDescription(suggestionText)
 			.addField('Suggested by', `${message.author} ${message.author.tag}`)
-			.addField('Instructions', '👍 = I **want** this to happen.\n🤷 = I **don\'t care** whether this happens.\n👎 = I **don\'t want** this to happen.')
+			.addField('Instructions', '👍 = I __**want**__ this to happen.\n🤷 = I __**don\'t care**__ whether this happens.\n👎 = I __**don\'t want**__ this to happen.')
 			.setFooter('Votes are open until:')
 			.setTimestamp(endHour);
 		const sentMessage = await message.channel.send(embed);
