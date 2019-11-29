@@ -17,6 +17,12 @@ for (const guildConfig of process.env.LOGGING_CHANNELS.split(',')) {
 	loggingChannels[guild] = channel;
 }
 
+const suggestionRoles = {};
+for (const guildConfig of process.env.SUGGESTION_ROLES.split(',')) {
+	const [guild, roles] = guildConfig.split(':');
+	suggestionRoles[guild] = roles.split(' ');
+}
+
 module.exports = {
 	command: 'suggest',
 	aliases: [],
@@ -37,6 +43,14 @@ module.exports = {
 				await message.channel.send(`${message.author}, suggestions aren't enabled on this server.`);
 			}
 			return;
+		}
+
+		if (suggestionRoles[message.guild.id]) {
+			const member = await message.guild.fetchMember(message.author);
+			if (!suggestionRoles[message.guild.id].some(e => member.roles.has(e))) {
+				await message.channel.send(`${message.author}, you don't have the required roles to use this command.`);
+				return;
+			}
 		}
 
 		const HOUR = 60 * 60 * 1000;
@@ -155,6 +169,13 @@ if (!module.exports.disabled) {
 		const isSuggestion = await Suggestion.exists({messageId: reaction.message.id});
 		if (!isSuggestion) {
 			return;
+		}
+		// require necessary roles
+		if (suggestionRoles[reaction.message.guild.id]) {
+			const member = await reaction.message.guild.fetchMember(user);
+			if (!suggestionRoles[reaction.message.guild.id].some(e => member.roles.has(e))) {
+				await reaction.remove(user);
+			}
 		}
 		// allow only 1 reaction per message per user
 		let filterFunc;
