@@ -4,6 +4,7 @@ const schedule = require('node-schedule');
 
 const reactionHandler = require('../reactionHandler.js');
 const Suggestion = require('../models/Suggestion.js');
+const {CLOSED, OPEN} = require('../constants/suggestions.js').COLORS;
 
 const suggestionChannels = {};
 for (const guildConfig of process.env.SUGGESTION_CHANNELS.split(',')) {
@@ -65,11 +66,11 @@ module.exports = {
 		}
 
 		const embed = new discord.RichEmbed()
-			.setColor(0x005AB5)
+			.setColor(OPEN)
 			.setTitle('Suggestion')
 			.setDescription(suggestionText)
 			.addField('Suggested by', `${message.author} ${message.author.tag}`)
-			.addField('Instructions', '👍 = I __**want**__ this to happen.\n🤷 = I __**don\'t care**__ whether this happens.\n👎 = I __**don\'t want**__ this to happen.')
+			.addField('Instructions', '👍 = I __**want**__ this to happen.\n🤷 = I __**don\'t care**__ whether this happens.\n👎 = I __**don\'t want**__ this to happen.', true)
 			.setFooter('Votes are open until:')
 			.setTimestamp(endHour);
 		const sentMessage = await message.channel.send(embed);
@@ -132,13 +133,21 @@ if (!module.exports.disabled) {
 				}
 				// edit with vote results
 				const newEmbed = new discord.RichEmbed()
-					.setColor(0xDC3220)
 					.setTitle(oldEmbed.title)
 					.setDescription(oldEmbed.description)
 					.addField('Suggested by', oldEmbed.fields[0].value)
-					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e].size} (${Math.round((results[e].size / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`)
+					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e].size} (${Math.round((results[e].size / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`, true)
 					.setFooter('Votes closed at:')
 					.setTimestamp(oldEmbed.timestamp);
+
+				if (oldEmbed.fields[2]) { // if the embed has a status set
+					newEmbed
+						.setColor(oldEmbed.color)
+						.addField(oldEmbed.fields[2].name, oldEmbed.fields[2].value, true); // status
+				} else {
+					newEmbed.setColor(CLOSED);
+				}
+
 				await message.edit(newEmbed);
 				await message.clearReactions();
 				await suggestion.remove();
