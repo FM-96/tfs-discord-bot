@@ -24,6 +24,7 @@ module.exports = {
 		}
 
 		const messages = await getChannelHistory(message.client.channels.get(suggestionChannels[message.guild.id]));
+		messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
 		const acceptedSuggestions = messages.filter(e => isValidSuggestion(e) && e.embeds[0].color === COLORS.ACCEPTED);
 		const closedSuggestions = messages.filter(e => isValidSuggestion(e) && e.embeds[0].color === COLORS.CLOSED);
