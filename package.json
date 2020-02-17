@@ -1,6 +1,6 @@
 {
   "name": "tfs-discord-bot",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Discord bot for TheFlamingShark's Official Server.",
   "main": "index.js",
   "scripts": {

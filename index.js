@@ -12,6 +12,7 @@ const path = require('path');
 
 const commandHandler = require('./commandHandler.js');
 const reactionHandler = require('./reactionHandler.js');
+const rememberRoles = require('./rememberRoles.js');
 const youtube = require('./youtube.js');
 
 commandHandler.setOwnerId(process.env.OWNER_ID);
@@ -54,8 +55,15 @@ client.once('ready', () => {
 	}
 });
 
-client.on('ready', () => {
+client.on('ready', async () => {
 	logger.info('Successfully logged in');
+
+	try {
+		await rememberRoles.updateDatabase(client);
+	} catch (err) {
+		logger.error('Error while updating role database:');
+		logger.error(err);
+	}
 });
 
 client.on('message', async message => {
@@ -105,6 +113,24 @@ client.on('messageReactionAdd', async (reaction, user) => {
 		await reactionHandler.runReactionListeners(reaction, user);
 	} catch (err) {
 		logger.error('Error while processing reaction listeners:');
+		logger.error(err);
+	}
+});
+
+client.on('guildMemberAdd', async (member) => {
+	try {
+		await rememberRoles.memberAdd(member);
+	} catch (err) {
+		logger.error('Error while processing new member:');
+		logger.error(err);
+	}
+});
+
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+	try {
+		await rememberRoles.memberUpdate(oldMember, newMember);
+	} catch (err) {
+		logger.error('Error while updating member roles:');
 		logger.error(err);
 	}
 });
