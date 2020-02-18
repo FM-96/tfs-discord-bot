@@ -23,7 +23,7 @@ module.exports = {
 	adminOnly: false,
 	modOnly: false,
 	inGuilds: true,
-	inDms: true,
+	inDms: false,
 	allowBots: true,
 	botsOnly: false,
 	allowSelf: false,
