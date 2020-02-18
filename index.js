@@ -17,7 +17,7 @@ const youtube = require('./youtube.js');
 
 commandHandler.setOwnerId(process.env.OWNER_ID);
 commandHandler.setGlobalPrefixes(false);
-commandHandler.setAdminRoleName(process.env.ADMIN_ROLE);
+// FIXME commandHandler.setAdminRoleName(process.env.ADMIN_ROLE);
 
 // register commands
 try {

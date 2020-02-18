@@ -13,6 +13,7 @@ module.exports = {
 	usage: null,
 	ownerOnly: false,
 	adminOnly: false,
+	modOnly: false,
 	inGuilds: true,
 	inDms: false,
 	allowBots: false,

@@ -1,4 +1,4 @@
-// version from 2018-11-05
+// version from 2020-02-18
 module.exports = {
 	checkCommand,
 	checkTasks,
@@ -7,7 +7,7 @@ module.exports = {
 	getGuildPrefixes,
 	registerCommandsFolder,
 	registerTasksFolder,
-	setAdminRoleName,
+	setModRoleName,
 	setOwnerId,
 	setGlobalPrefixes,
 	setGuildPrefixes,
@@ -22,7 +22,8 @@ module.exports = {
  * @property {String?} description A short description of the command
  * @property {String?} usage Instructions on how to use the command
  * @property {Boolean?} ownerOnly Whether the command is only usable by the bot's owner (default false)
- * @property {Boolean?} adminOnly Whether the command is only usable by guild admins (admins are determined via role, not permissions) (default false)
+ * @property {Boolean?} adminOnly Whether the command is only usable by guild admins (users with the ADMINISTRATOR permission) (default false)
+ * @property {Boolean?} modOnly Whether the command is only usable by guild moderators (users who have one or more of the mod roles) and guild admins (default false)
  * @property {Boolean?} inGuilds Whether the command is usable in guilds (default true)
  * @property {Boolean?} inDms Whether the command is usable in DMs (default true)
  * @property {Boolean?} allowBots Whether the command is usable by other bots (default false)
@@ -38,7 +39,8 @@ module.exports = {
  * @property {String} name The name of the task (functions as its ID)
  * @property {Boolean} limited Whether a task is limited (at most one limited task can run per message)
  * @property {Boolean?} ownerOnly Whether the task is only triggered by messages from the bot's owner (default false)
- * @property {Boolean?} adminOnly Whether the task is only triggered by messages from guild admins (admins are determined via role, not permissions) (default false)
+ * @property {Boolean?} adminOnly Whether the task is only triggered by messages from guild admins (users with the ADMINISTRATOR permission) (default false)
+ * @property {Boolean?} modOnly Whether the task is only triggered by messages from guild moderators (users who have one or more of the mod roles) and guild admins (default false)
  * @property {Boolean?} inGuilds Whether the task is triggered by messages in guilds (default true)
  * @property {Boolean?} inDms Whether the task is triggered by messages in DMs (default true)
  * @property {Boolean?} allowBots Whether the task is triggered by messages from other bots (default false)
@@ -63,7 +65,7 @@ const fs = require('fs');
 const path = require('path');
 
 const settings = {
-	adminRoleName: false,
+	modRoleName: false,
 	ownerId: false,
 	globalPrefixes: [''],
 	guildPrefixes: new Map(),
@@ -127,17 +129,19 @@ async function checkCommand(message) {
  * @returns {PermissionChecks} Information about whether the command passes the permission checks
  */
 function checkCommandPermissions(commandObj, message) {
-	const passAdminCheck = !commandObj.adminOnly || settings.adminRoleName === true || (settings.adminRoleName !== false && message.channel.type === 'text' && message.member.roles.exists('name', settings.adminRoleName));
+	const passAdminCheck = !commandObj.adminOnly || (message.channel.type === 'text' && message.member.hasPermission('ADMINISTRATOR'));
+	const passModCheck = !commandObj.modOnly || (message.channel.type === 'text' && message.member.hasPermission('ADMINISTRATOR')) || settings.modRoleName === true || (settings.modRoleName !== false && message.channel.type === 'text' && message.member.roles.some(e => e.name === settings.modRoleName));
 	const passBotCheck = message.author.bot ? commandObj.allowBots || commandObj.botsOnly || message.author.id === message.client.user.id : !commandObj.botsOnly;
 	const passChannelTypeCheck = message.channel.type === 'text' ? commandObj.inGuilds !== false : commandObj.inDms !== false;
 	const passOwnerCheck = !commandObj.ownerOnly || settings.ownerId === true || (settings.ownerId !== false && message.author.id === settings.ownerId);
 	const passSelfCheck = message.author.id !== message.client.user.id || commandObj.allowSelf;
 
-	const passChecks = passAdminCheck && passBotCheck && passChannelTypeCheck && passOwnerCheck && passSelfCheck;
+	const passChecks = passAdminCheck && passModCheck && passBotCheck && passChannelTypeCheck && passOwnerCheck && passSelfCheck;
 
 	return {
 		passChecks,
 		passAdminCheck,
+		passModCheck,
 		passBotCheck,
 		passChannelTypeCheck,
 		passOwnerCheck,
@@ -188,17 +192,19 @@ async function checkTasks(message, excludeLimited) {
  * @returns {PermissionChecks} Information about whether the task passes the permission checks
  */
 function checkTaskPermissions(taskObj, message) {
-	const passAdminCheck = !taskObj.adminOnly || settings.adminRoleName === true || (settings.adminRoleName !== false && message.channel.type === 'text' && message.member.roles.exists('name', settings.adminRoleName));
+	const passAdminCheck = !taskObj.adminOnly || (message.channel.type === 'text' && message.member.hasPermission('ADMINISTRATOR'));
+	const passModCheck = !taskObj.modOnly || (message.channel.type === 'text' && message.member.hasPermission('ADMINISTRATOR')) || settings.modRoleName === true || (settings.modRoleName !== false && message.channel.type === 'text' && message.member.roles.some(e => e.name === settings.modRoleName));
 	const passBotCheck = message.author.bot ? taskObj.allowBots || taskObj.botsOnly || message.author.id === message.client.user.id : !taskObj.botsOnly;
 	const passChannelTypeCheck = message.channel.type === 'text' ? taskObj.inGuilds !== false : taskObj.inDms !== false;
 	const passOwnerCheck = !taskObj.ownerOnly || settings.ownerId === true || (settings.ownerId !== false && message.author.id === settings.ownerId);
 	const passSelfCheck = message.author.id !== message.client.user.id || taskObj.allowSelf;
 
-	const passChecks = passAdminCheck && passBotCheck && passChannelTypeCheck && passOwnerCheck && passSelfCheck;
+	const passChecks = passAdminCheck && passModCheck && passBotCheck && passChannelTypeCheck && passOwnerCheck && passSelfCheck;
 
 	return {
 		passChecks,
 		passAdminCheck,
+		passModCheck,
 		passBotCheck,
 		passChannelTypeCheck,
 		passOwnerCheck,
@@ -332,17 +338,17 @@ function registerTasksFolder(tasksFolder) {
 }
 
 /**
- * Sets the admin role name
- * @param {String|Boolean} adminRoleName The admin role name, or true to allow all, or false to deny all
+ * Sets the moderator role name
+ * @param {String|Boolean} modRoleName The moderator role name, or true to allow all, or false to deny all
  * @returns {void}
  */
-function setAdminRoleName(adminRoleName) {
-	if (typeof adminRoleName !== 'string' && typeof adminRoleName !== 'boolean') {
-		throw new Error('adminRoleName must be either a string or a boolean');
-	} else if (adminRoleName === '') {
-		throw new Error('adminRoleName cannot be an empty string');
+function setModRoleName(modRoleName) {
+	if (typeof modRoleName !== 'string' && typeof modRoleName !== 'boolean') {
+		throw new Error('modRoleName must be either a string or a boolean');
+	} else if (modRoleName === '') {
+		throw new Error('modRoleName cannot be an empty string');
 	}
-	settings.adminRoleName = adminRoleName;
+	settings.modRoleName = modRoleName;
 }
 
 /**
