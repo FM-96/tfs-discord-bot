@@ -49,7 +49,7 @@ module.exports = {
 			return;
 		}
 
-		if (targetMessage.author.id !== message.client.user.id || !targetMessage.embeds[0] || targetMessage.embeds[0].title !== 'Suggestion') {
+		if (targetMessage.author.id !== message.client.user.id || !targetMessage.embeds[0] || !targetMessage.embeds[0].title || !targetMessage.embeds[0].title.startsWith('Suggestion')) {
 			await message.channel.send(`${message.author}, specified message is not a suggestion.`);
 			return;
 		}

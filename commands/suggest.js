@@ -66,9 +66,13 @@ module.exports = {
 			return;
 		}
 
+		const lastMessages = await message.channel.fetchMessages({before: message.id});
+		const lastSuggestion = lastMessages.find(isValidSuggestion);
+		const suggestionId = lastSuggestion ? Number(lastSuggestion.embeds[0].title.split('#')[1]) + 1 || 1 : 1;
+
 		const embed = new discord.RichEmbed()
 			.setColor(OPEN)
-			.setTitle('Suggestion')
+			.setTitle(`Suggestion #${suggestionId}`)
 			.setDescription(suggestionText)
 			.addField('Suggested by', `${message.author} ${message.author.tag}`)
 			.addField('Instructions', '👍 = I __**want**__ this to happen.\n🤷 = I __**don\'t care**__ whether this happens.\n👎 = I __**don\'t want**__ this to happen.', true)
@@ -204,4 +208,8 @@ if (!module.exports.disabled) {
 		}
 		await Promise.all(removals);
 	});
+}
+
+function isValidSuggestion(message) {
+	return message.embeds[0] && message.embeds[0].title && message.embeds[0].title.startsWith('Suggestion') && message.embeds[0].description;
 }

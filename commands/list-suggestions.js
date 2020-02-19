@@ -35,24 +35,24 @@ module.exports = {
 
 		let text = '';
 		text += `**__Closed Suggestions:__** ${closedSuggestions.length}\n`;
-		text += closedSuggestions.map((e, i) => `\`C${i + 1}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
+		text += closedSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
 		text += '\n';
 
 		text += `**__Accepted Suggestions:__** ${acceptedSuggestions.length}\n`;
-		text += acceptedSuggestions.map((e, i) => `\`A${i + 1}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
+		text += acceptedSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
 		text += '\n';
 
 		text += `**__Open Suggestions:__** ${openSuggestions.length}\n`;
-		text += openSuggestions.map((e, i) => `\`O${i + 1}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
+		text += openSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
 		text += '\n';
 
 		if (message.content.slice(context.argsOffset).trim().toLowerCase().startsWith('all')) {
 			text += `**__Rejected Suggestions:__** ${rejectedSuggestions.length}\n`;
-			text += rejectedSuggestions.map((e, i) => `\`R${i + 1}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
+			text += rejectedSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
 			text += '\n';
 
 			text += `**__Implemented Suggestions:__** ${implementedSuggestions.length}\n`;
-			text += implementedSuggestions.map((e, i) => `\`I${i + 1}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
+			text += implementedSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
 			text += '\n';
 		}
 
@@ -98,5 +98,5 @@ function shorten(string) {
 }
 
 function isValidSuggestion(message) {
-	return message.embeds[0] && message.embeds[0].title === 'Suggestion' && message.embeds[0].description;
+	return message.embeds[0] && message.embeds[0].title && message.embeds[0].title.startsWith('Suggestion') && message.embeds[0].description;
 }
