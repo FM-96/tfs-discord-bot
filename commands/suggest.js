@@ -1,4 +1,4 @@
-const discord = require('discord.js');
+const Discord = require('discord.js');
 const logger = require('winston').loggers.get('default');
 const schedule = require('node-schedule');
 
@@ -50,7 +50,7 @@ module.exports = {
 		const lastSuggestion = lastMessages.find(isValidSuggestion);
 		const suggestionId = lastSuggestion ? Number(lastSuggestion.embeds[0].title.split('#')[1]) + 1 || 1 : 1;
 
-		const embed = new discord.RichEmbed()
+		const embed = new Discord.RichEmbed()
 			.setColor(OPEN)
 			.setTitle(`Suggestion #${suggestionId}`)
 			.setDescription(suggestionText)
@@ -116,7 +116,7 @@ if (!module.exports.disabled) {
 					}
 				}
 				// edit with vote results
-				const newEmbed = new discord.RichEmbed()
+				const newEmbed = new Discord.RichEmbed()
 					.setTitle(oldEmbed.title)
 					.setDescription(oldEmbed.description)
 					.addField('Suggested by', oldEmbed.fields[0].value)

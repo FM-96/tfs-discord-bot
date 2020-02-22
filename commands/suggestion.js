@@ -1,4 +1,4 @@
-const discord = require('discord.js');
+const Discord = require('discord.js');
 const logger = require('winston').loggers.get('default');
 
 const {COLORS} = require('../constants/suggestions.js');
@@ -55,7 +55,7 @@ module.exports = {
 				return;
 			}
 			action = 'Suggestion edited:';
-			newEmbed = new discord.RichEmbed()
+			newEmbed = new Discord.RichEmbed()
 				.setColor(oldEmbed.color)
 				.setTitle(oldEmbed.title)
 				.setDescription(text)
@@ -70,7 +70,7 @@ module.exports = {
 			await targetMessage.edit(newEmbed);
 		} else if (['a', 'accepted'].includes(mode)) {
 			action = 'Suggestion accepted:';
-			newEmbed = new discord.RichEmbed()
+			newEmbed = new Discord.RichEmbed()
 				.setColor(COLORS.ACCEPTED)
 				.setTitle(oldEmbed.title)
 				.setDescription(oldEmbed.description)
@@ -82,7 +82,7 @@ module.exports = {
 			await targetMessage.edit(newEmbed);
 		} else if (['i', 'implemented'].includes(mode)) {
 			action = 'Suggestion implemented:';
-			newEmbed = new discord.RichEmbed()
+			newEmbed = new Discord.RichEmbed()
 				.setColor(COLORS.IMPLEMENTED)
 				.setTitle(oldEmbed.title)
 				.setDescription(oldEmbed.description)
@@ -94,7 +94,7 @@ module.exports = {
 			await targetMessage.edit(newEmbed);
 		} else if (['p', 'pending'].includes(mode)) {
 			action = 'Suggestion returned to pending:';
-			newEmbed = new discord.RichEmbed()
+			newEmbed = new Discord.RichEmbed()
 				.setColor(oldEmbed.fields[1].name === 'Instructions' ? COLORS.OPEN : COLORS.CLOSED)
 				.setTitle(oldEmbed.title)
 				.setDescription(oldEmbed.description)
@@ -105,7 +105,7 @@ module.exports = {
 			await targetMessage.edit(newEmbed);
 		} else if (['r', 'rejected'].includes(mode)) {
 			action = 'Suggestion rejected:';
-			newEmbed = new discord.RichEmbed()
+			newEmbed = new Discord.RichEmbed()
 				.setColor(COLORS.REJECTED)
 				.setTitle(oldEmbed.title)
 				.setDescription(oldEmbed.description)

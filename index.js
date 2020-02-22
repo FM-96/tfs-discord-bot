@@ -1,7 +1,7 @@
 require('dotenv').config();
 require('./configureLogger.js');
 
-const discord = require('discord.js');
+const Discord = require('discord.js');
 const got = require('got');
 const logger = require('winston').loggers.get('default');
 const mongoose = require('mongoose');
@@ -42,7 +42,7 @@ try {
 	process.exit(1);
 }
 
-const client = new discord.Client();
+const client = new Discord.Client();
 global.client = client;
 
 client.once('ready', () => {

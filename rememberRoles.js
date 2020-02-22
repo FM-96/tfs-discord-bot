@@ -4,7 +4,7 @@ module.exports = {
 	memberUpdate,
 };
 
-const discord = require('discord.js');
+const Discord = require('discord.js');
 const logger = require('winston').loggers.get('default');
 
 const {getGuildConfig} = require('./guildConfigManager.js');
@@ -66,7 +66,7 @@ async function memberAdd(member) {
 
 			const loggingChannel = config.loggingChannel;
 			if (loggingChannel) {
-				const embed = new discord.RichEmbed()
+				const embed = new Discord.RichEmbed()
 					.setAuthor(member.user.tag, member.user.avatarURL)
 					.setDescription(`${member} rejoined and was given back the following roles: ${rolesToAdd.map(e => `__${e.name}__`).join(', ')}.`)
 					.setColor(0xCC00CC)

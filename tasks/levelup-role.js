@@ -1,4 +1,4 @@
-const discord = require('discord.js');
+const Discord = require('discord.js');
 
 const {getGuildConfig} = require('../guildConfigManager.js');
 
@@ -56,7 +56,7 @@ module.exports = {
 
 		const loggingChannel = config.loggingChannel;
 		if (loggingChannel) {
-			const embed = new discord.RichEmbed()
+			const embed = new Discord.RichEmbed()
 				.setAuthor(user.tag, user.avatarURL)
 				.setDescription(`${member} reached level ${newLevel}.\nAdded roles: ${rolesToAdd.join(', ')}\nRemoved roles: ${rolesToRemove.join(', ')}`)
 				.setColor(member.displayColor)
