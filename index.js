@@ -155,7 +155,7 @@ async function checkYouTubeAvatar() {
 		const channelName = channelObj.snippet.title;
 
 		const avatarRes = await got(channelObj.snippet.thumbnails.high.url, {
-			encoding: null,
+			responseType: 'buffer',
 		});
 		const avatarBuffer = avatarRes.body;
 
