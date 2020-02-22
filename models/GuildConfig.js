@@ -110,7 +110,6 @@ const schema = mongoose.Schema({
 		},
 		// TODO getter to get it as RexExp?
 	},
-	// TODO implement
 	levelUpExcludedRoles: {
 		type: [{
 			type: String,

@@ -23,26 +23,46 @@ module.exports = {
 
 		const levelUpRegex = new RegExp(config.levelUpMessage);
 		const match = message.content.match(levelUpRegex);
-		if (match) {
-			const [, userId, level] = match;
-			const levelUpRole = config.levelUpRoles.find(e => e.level === Number(level));
-			if (levelUpRole) {
-				const user = await message.client.fetchUser(userId);
-				const member = await message.guild.fetchMember(user);
-				const role = levelUpRole.role;
-				await member.addRole(role);
+		if (!match) {
+			return;
+		}
 
-				const loggingChannel = config.loggingChannel;
-				if (loggingChannel) {
-					const embed = new discord.RichEmbed()
-						.setAuthor(user.tag, user.avatarURL)
-						.setDescription(`${member} reached level ${level} and was added to ${role}.`)
-						.setColor(role.color)
-						.setFooter(`ID: ${user.id}`)
-						.setTimestamp();
-					await loggingChannel.send(embed);
-				}
-			}
+		const [, userId, newLevel] = match;
+
+		const reached = config.levelUpRoles.filter(e => e.level <= newLevel);
+		const highestReachedLevel = reached.reduce((acc, cur) => Math.max(acc, cur.level), 0);
+		const highestReachedRoles = reached.filter(e => e.level === highestReachedLevel).map(e => e.role);
+		const otherRoles = config.levelUpRoles.filter(e => e.level !== highestReachedLevel).map(e => e.role);
+
+		const user = await message.client.fetchUser(userId);
+		const member = await message.guild.fetchMember(user);
+
+		if (config.levelUpExcludedRoles.some(e => member.roles.has(e))) {
+			await member.removeRoles(config.levelUpRoles.map(e => e.role).filter(e => member.roles.has(e.id)));
+			return;
+		}
+		const rolesToAdd = highestReachedRoles.filter(e => !member.roles.has(e.id));
+		const rolesToRemove = otherRoles.filter(e => member.roles.has(e.id));
+		if (rolesToAdd.length) {
+			await member.addRoles(rolesToAdd);
+		}
+		if (rolesToRemove.length) {
+			await member.removeRoles(rolesToRemove);
+		}
+
+		if (!(rolesToAdd.length || rolesToRemove.length)) {
+			return;
+		}
+
+		const loggingChannel = config.loggingChannel;
+		if (loggingChannel) {
+			const embed = new discord.RichEmbed()
+				.setAuthor(user.tag, user.avatarURL)
+				.setDescription(`${member} reached level ${newLevel}.\nAdded roles: ${rolesToAdd.join(', ')}\nRemoved roles: ${rolesToRemove.join(', ')}`)
+				.setColor(member.displayColor)
+				.setFooter(`ID: ${user.id}`)
+				.setTimestamp();
+			await loggingChannel.send(embed);
 		}
 	},
 };
