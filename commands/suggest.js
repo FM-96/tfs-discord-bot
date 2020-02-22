@@ -27,10 +27,6 @@ module.exports = {
 			await message.channel.send(`${message.author}, suggestions aren't enabled on this server.`);
 			return;
 		}
-		if (message.channel.id !== suggestionChannel.id) {
-			await message.channel.send(`${message.author}, suggestions are only allowed in <#${suggestionChannel.id}>.`);
-			return;
-		}
 
 		if (config.suggestionRoles.length) {
 			const member = await message.guild.fetchMember(message.author);
@@ -46,8 +42,7 @@ module.exports = {
 
 		const suggestionText = message.content.slice(context.argsOffset).trim();
 		if (!suggestionText) {
-			const reply = await message.channel.send(`${message.author}, please enter a suggestion text.`);
-			await Promise.all([message.delete(), reply.delete(5000)]);
+			await message.channel.send(`${message.author}, please enter a suggestion text.`);
 			return;
 		}
 
@@ -63,8 +58,7 @@ module.exports = {
 			.addField('Instructions', '👍 = I __**want**__ this to happen.\n🤷 = I __**don\'t care**__ whether this happens.\n👎 = I __**don\'t want**__ this to happen.', true)
 			.setFooter('Votes are open until:')
 			.setTimestamp(endHour);
-		const sentMessage = await message.channel.send(embed);
-		await message.delete();
+		const sentMessage = await suggestionChannel.send(embed);
 
 		const reactions = sentMessage.react('👍').then(() => sentMessage.react('🤷')).then(() => sentMessage.react('👎'));
 		reactions.catch(() => {/* noop */}); // prevent "Promise rejection was handled asynchronously" warning
