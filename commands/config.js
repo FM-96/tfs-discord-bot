@@ -43,5 +43,7 @@ module.exports = {
 		} catch (err) {
 			await message.reply(`could not set "${key}":\n\`\`\`\n${err.message}\n\`\`\``);
 		}
+
+		// TODO index guild on rememberRoles change
 	},
 };

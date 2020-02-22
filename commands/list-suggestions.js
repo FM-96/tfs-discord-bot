@@ -1,10 +1,5 @@
 const {COLORS} = require('../constants/suggestions.js');
-
-const suggestionChannels = {};
-for (const guildConfig of process.env.SUGGESTION_CHANNELS.split(',')) {
-	const [guild, channel] = guildConfig.split(':');
-	suggestionChannels[guild] = channel;
-}
+const {getGuildConfig} = require('../guildConfigManager.js');
 
 module.exports = {
 	command: 'list-suggestions',
@@ -20,11 +15,13 @@ module.exports = {
 	botsOnly: false,
 	allowSelf: false,
 	run: async (message, context) => {
-		if (!suggestionChannels[message.guild.id] || !message.client.channels.get(suggestionChannels[message.guild.id])) {
+		const config = await getGuildConfig(message.guild.id);
+		const suggestionChannel = config.suggestionChannel;
+		if (!suggestionChannel) {
 			return;
 		}
 
-		const messages = await getChannelHistory(message.client.channels.get(suggestionChannels[message.guild.id]));
+		const messages = await getChannelHistory(suggestionChannel);
 		messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
 		const acceptedSuggestions = messages.filter(e => isValidSuggestion(e) && e.embeds[0].color === COLORS.ACCEPTED);

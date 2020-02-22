@@ -1,10 +1,5 @@
 const commandHandler = require('../commandHandler.js');
-
-const suggestionChannels = {};
-for (const guildConfig of process.env.SUGGESTION_CHANNELS.split(',')) {
-	const [guild, channel] = guildConfig.split(':');
-	suggestionChannels[guild] = channel;
-}
+const {getGuildConfig} = require('../guildConfigManager.js');
 
 module.exports = {
 	name: 'clear-suggestions',
@@ -17,7 +12,10 @@ module.exports = {
 	allowBots: true,
 	botsOnly: false,
 	allowSelf: false,
-	test: async message => message.channel.id === suggestionChannels[message.guild.id],
+	test: async message => {
+		const config = await getGuildConfig(message.guild.id);
+		return config.suggestionChannel && message.channel.id === config.suggestionChannel.id;
+	},
 	run: async (message, context) => {
 		const suggestionCommandRegex = new RegExp(`^(${commandHandler.getGlobalPrefixes().concat(commandHandler.getGuildPrefixes(message.guild.id)).join('|')})suggest`);
 		if (!suggestionCommandRegex.test(message.content)) {

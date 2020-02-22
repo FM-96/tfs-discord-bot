@@ -2,18 +2,7 @@ const discord = require('discord.js');
 const logger = require('winston').loggers.get('default');
 
 const {COLORS} = require('../constants/suggestions.js');
-
-const suggestionChannels = {};
-for (const guildConfig of process.env.SUGGESTION_CHANNELS.split(',')) {
-	const [guild, channel] = guildConfig.split(':');
-	suggestionChannels[guild] = channel;
-}
-
-const loggingChannels = {};
-for (const guildConfig of process.env.LOGGING_CHANNELS.split(',')) {
-	const [guild, channel] = guildConfig.split(':');
-	loggingChannels[guild] = channel;
-}
+const {getGuildConfig} = require('../guildConfigManager.js');
 
 module.exports = {
 	command: 'suggestion',
@@ -34,7 +23,9 @@ module.exports = {
 		const targetId = args.shift();
 		const text = args.join(' ');
 
-		const suggestionChannel = message.guild.channels.get(suggestionChannels[message.guild.id]);
+		const config = await getGuildConfig(message.guild.id);
+
+		const suggestionChannel = config.suggestionChannel;
 		if (!suggestionChannel) {
 			await message.channel.send(`${message.author}, can't find suggestion channel.`);
 			return;
@@ -131,7 +122,7 @@ module.exports = {
 
 		if (newEmbed) {
 			await message.channel.send(action, newEmbed);
-			const loggingChannel = message.client.channels.get(loggingChannels[message.guild.id]);
+			const loggingChannel = config.loggingChannel;
 			if (loggingChannel) {
 				newEmbed.fields[0].value = newEmbed.fields[0].value.replace(/$/, ` (${message.author.id})`); // add suggester ID
 				await loggingChannel.send(action, newEmbed);

@@ -2,27 +2,10 @@ const discord = require('discord.js');
 const logger = require('winston').loggers.get('default');
 const schedule = require('node-schedule');
 
+const {getGuildConfig} = require('../guildConfigManager.js');
 const reactionHandler = require('../reactionHandler.js');
 const Suggestion = require('../models/Suggestion.js');
 const {CLOSED, OPEN} = require('../constants/suggestions.js').COLORS;
-
-const suggestionChannels = {};
-for (const guildConfig of process.env.SUGGESTION_CHANNELS.split(',')) {
-	const [guild, channel] = guildConfig.split(':');
-	suggestionChannels[guild] = channel;
-}
-
-const loggingChannels = {};
-for (const guildConfig of process.env.LOGGING_CHANNELS.split(',')) {
-	const [guild, channel] = guildConfig.split(':');
-	loggingChannels[guild] = channel;
-}
-
-const suggestionRoles = {};
-for (const guildConfig of process.env.SUGGESTION_ROLES.split(',')) {
-	const [guild, roles] = guildConfig.split(':');
-	suggestionRoles[guild] = roles.split(' ');
-}
 
 module.exports = {
 	command: 'suggest',
@@ -38,25 +21,27 @@ module.exports = {
 	botsOnly: false,
 	allowSelf: false,
 	run: async (message, context) => {
-		if (message.channel.id !== suggestionChannels[message.guild.id]) {
-			if (suggestionChannels[message.guild.id]) {
-				await message.channel.send(`${message.author}, suggestions are only allowed in <#${suggestionChannels[message.guild.id]}>.`);
-			} else {
-				await message.channel.send(`${message.author}, suggestions aren't enabled on this server.`);
-			}
+		const config = await getGuildConfig(message.guild.id);
+		const suggestionChannel = config.suggestionChannel;
+		if (!suggestionChannel) {
+			await message.channel.send(`${message.author}, suggestions aren't enabled on this server.`);
+			return;
+		}
+		if (message.channel.id !== suggestionChannel.id) {
+			await message.channel.send(`${message.author}, suggestions are only allowed in <#${suggestionChannel.id}>.`);
 			return;
 		}
 
-		if (suggestionRoles[message.guild.id]) {
+		if (config.suggestionRoles.length) {
 			const member = await message.guild.fetchMember(message.author);
-			if (!suggestionRoles[message.guild.id].some(e => member.roles.has(e))) {
+			if (!config.suggestionRoles.some(e => member.roles.has(e))) {
 				await message.channel.send(`${message.author}, you don't have the required roles to use this command.`);
 				return;
 			}
 		}
 
 		const HOUR = 60 * 60 * 1000;
-		const endTime = Date.now() + (process.env.VOTE_TIME_HOURS * 60 * 60 * 1000);
+		const endTime = Date.now() + (config.suggestionVoteHours * 60 * 60 * 1000);
 		const endHour = endTime + (HOUR - (endTime % HOUR)); // next full hour after endTime
 
 		const suggestionText = message.content.slice(context.argsOffset).trim();
@@ -92,7 +77,7 @@ module.exports = {
 		});
 		await suggestion.save();
 
-		const loggingChannel = message.client.channels.get(loggingChannels[message.guild.id]);
+		const loggingChannel = config.loggingChannel;
 		if (loggingChannel) {
 			embed.fields[0].value = embed.fields[0].value.replace(/$/, ` (${message.author.id})`); // add suggester ID
 			embed.fields.splice(1, 1); // remove instructions field
@@ -157,7 +142,8 @@ if (!module.exports.disabled) {
 				await message.clearReactions();
 				await suggestion.remove();
 
-				const loggingChannel = message.client.channels.get(loggingChannels[message.guild.id]);
+				const config = await getGuildConfig(message.guild.id);
+				const loggingChannel = config.loggingChannel;
 				if (loggingChannel) {
 					const fullResults = ['👍', '🤷', '👎'].map((e, i) => `${['+1', 'shrug', '-1'][i]}:\n` + results[e].map(f => `${f.tag} (${f.id})`).join('\n')).join('\n\n');
 					newEmbed.fields[0].value = newEmbed.fields[0].value.replace(/$/, ` (${message.author.id})`); // add suggester ID
@@ -184,10 +170,12 @@ if (!module.exports.disabled) {
 		if (!isSuggestion) {
 			return;
 		}
+
+		const config = await getGuildConfig(reaction.message.guild.id);
 		// require necessary roles
-		if (suggestionRoles[reaction.message.guild.id]) {
+		if (config.suggestionRoles.length) {
 			const member = await reaction.message.guild.fetchMember(user);
-			if (!suggestionRoles[reaction.message.guild.id].some(e => member.roles.has(e))) {
+			if (!config.suggestionRoles.some(e => member.roles.has(e))) {
 				await reaction.remove(user);
 			}
 		}

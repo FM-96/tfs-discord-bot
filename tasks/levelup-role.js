@@ -1,20 +1,6 @@
 const discord = require('discord.js');
 
-const levelUpConfig = {};
-for (const guildConfig of process.env.LEVELUP_ROLES.split(',')) {
-	const [guild, roles] = guildConfig.split(':');
-	levelUpConfig[guild] = {};
-	for (const roleConfig of roles.split(' ')) {
-		const [level, role] = roleConfig.split('=');
-		levelUpConfig[guild][level] = role;
-	}
-}
-
-const loggingChannels = {};
-for (const guildConfig of process.env.LOGGING_CHANNELS.split(',')) {
-	const [guild, channel] = guildConfig.split(':');
-	loggingChannels[guild] = channel;
-}
+const {getGuildConfig} = require('../guildConfigManager.js');
 
 module.exports = {
 	name: 'levelup-role',
@@ -27,19 +13,26 @@ module.exports = {
 	allowBots: true,
 	botsOnly: false,
 	allowSelf: false,
-	test: async message => message.author.id === process.env.LEVELUP_BOT && message.guild && levelUpConfig[message.guild.id],
+	test: async message => true,
 	run: async (message, context) => {
-		const levelUpMessage = new RegExp(process.env.LEVELUP_MESSAGE);
-		const match = message.content.match(levelUpMessage);
+		const config = await getGuildConfig(message.guild.id);
+
+		if (!config.levelUpEnabled || message.author.id !== config.levelUpBot || !config.levelUpRoles.length) {
+			return;
+		}
+
+		const levelUpRegex = new RegExp(config.levelUpMessage);
+		const match = message.content.match(levelUpRegex);
 		if (match) {
 			const [, userId, level] = match;
-			const roleId = levelUpConfig[message.guild.id][level];
-			if (roleId) {
+			const levelUpRole = config.levelUpRoles.find(e => e.level === Number(level));
+			if (levelUpRole) {
 				const user = await message.client.fetchUser(userId);
 				const member = await message.guild.fetchMember(user);
-				const role = message.guild.roles.get(roleId);
+				const role = levelUpRole.role;
 				await member.addRole(role);
-				const loggingChannel = message.client.channels.get(loggingChannels[message.guild.id]);
+
+				const loggingChannel = config.loggingChannel;
 				if (loggingChannel) {
 					const embed = new discord.RichEmbed()
 						.setAuthor(user.tag, user.avatarURL)

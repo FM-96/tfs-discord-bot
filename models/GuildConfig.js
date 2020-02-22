@@ -37,19 +37,16 @@ const schema = mongoose.Schema({
 	// 	}],
 	// 	set: setArray,
 	// },
-	// TODO use
 	youtubeGuildIconSync: {
 		type: Boolean,
 		default: false,
 	},
 	// TODO use
 	youtubeGuildIconHash: String,
-	// TODO use
 	rememberRoles: {
 		type: Boolean,
 		default: false,
 	},
-	// TODO use
 	loggingChannel: {
 		type: String,
 		default: null,
@@ -60,7 +57,6 @@ const schema = mongoose.Schema({
 		get: getChannel,
 		set: setChannel,
 	},
-	// TODO use
 	suggestionChannel: {
 		type: String,
 		default: null,
@@ -71,7 +67,6 @@ const schema = mongoose.Schema({
 		get: getChannel,
 		set: setChannel,
 	},
-	// TODO use
 	suggestionRoles: {
 		type: [{
 			type: String,
@@ -84,7 +79,6 @@ const schema = mongoose.Schema({
 		}],
 		set: setArray,
 	},
-	// TODO use
 	suggestionVoteHours: {
 		type: Number,
 		default: 72,
@@ -94,12 +88,10 @@ const schema = mongoose.Schema({
 			message: 'Must be a whole number.',
 		},
 	},
-	// TODO use
 	levelUpEnabled: {
 		type: Boolean,
 		default: false,
 	},
-	// TODO use
 	levelUpBot: {
 		type: String,
 		default: '159985870458322944',
@@ -109,7 +101,6 @@ const schema = mongoose.Schema({
 		},
 		set: setUser,
 	},
-	// TODO use
 	levelUpMessage: {
 		type: String,
 		default: '^GG <@!?(\\d+)>, you just advanced to level (\\d+)!$',
@@ -119,7 +110,7 @@ const schema = mongoose.Schema({
 		},
 		// TODO getter to get it as RexExp?
 	},
-	// TODO use
+	// TODO implement
 	levelUpExcludedRoles: {
 		type: [{
 			type: String,
@@ -132,7 +123,6 @@ const schema = mongoose.Schema({
 		}],
 		set: setArray,
 	},
-	// TODO use
 	levelUpRoles: {
 		type: [levelUpRole],
 		set: setLevelUpRoles,

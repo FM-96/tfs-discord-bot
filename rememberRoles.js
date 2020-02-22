@@ -7,23 +7,16 @@ module.exports = {
 const discord = require('discord.js');
 const logger = require('winston').loggers.get('default');
 
+const {getGuildConfig} = require('./guildConfigManager.js');
+const GuildConfig = require('./models/GuildConfig.js');
 const MemberRoles = require('./models/MemberRoles.js');
-
-const loggingChannels = {};
-for (const guildConfig of process.env.LOGGING_CHANNELS.split(',')) {
-	const [guild, channel] = guildConfig.split(':');
-	loggingChannels[guild] = channel;
-}
 
 async function updateDatabase(client) {
 	// update member roles database
 	logger.debug('Updating member roles database');
+	const enabledGuilds = await GuildConfig.find({rememberRoles: true}).exec();
 	const saveOps = [];
-	for (const guild of client.guilds.array()) {
-		if (!process.env.REMEMBER_ROLES_GUILDS.split(',').includes(guild.id)) {
-			continue;
-		}
-
+	for (const guild of enabledGuilds.map(e => client.guilds.get(e.guildId)).filter(e => e)) {
 		await guild.fetchMembers();
 		let docs = await MemberRoles.find({guildId: guild.id}).exec();
 
@@ -49,7 +42,8 @@ async function updateDatabase(client) {
 }
 
 async function memberAdd(member) {
-	if (!process.env.REMEMBER_ROLES_GUILDS.split(',').includes(member.guild.id)) {
+	const config = await getGuildConfig(member.guild.id);
+	if (!config.rememberRoles) {
 		return;
 	}
 
@@ -70,7 +64,7 @@ async function memberAdd(member) {
 			logger.info(`${member.user.username} (${member.user.id}) rejoined, re-adding ${rolesToAdd.length} roles`);
 			member.addRoles(rolesToAdd).catch(logger.error);
 
-			const loggingChannel = member.client.channels.get(loggingChannels[member.guild.id]);
+			const loggingChannel = config.loggingChannel;
 			if (loggingChannel) {
 				const embed = new discord.RichEmbed()
 					.setAuthor(member.user.tag, member.user.avatarURL)
@@ -85,7 +79,8 @@ async function memberAdd(member) {
 }
 
 async function memberUpdate(oldMember, newMember) {
-	if (!process.env.REMEMBER_ROLES_GUILDS.split(',').includes(newMember.guild.id)) {
+	const config = await getGuildConfig(newMember.guild.id);
+	if (!config.rememberRoles) {
 		return;
 	}
 

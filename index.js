@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 const commandHandler = require('./commandHandler.js');
+const GuildConfig = require('./models/GuildConfig.js');
 const reactionHandler = require('./reactionHandler.js');
 const rememberRoles = require('./rememberRoles.js');
 const youtube = require('./youtube.js');
@@ -42,9 +43,9 @@ try {
 }
 
 const client = new discord.Client();
+global.client = client;
 
 client.once('ready', () => {
-	global.client = client;
 	commandHandler.setGlobalPrefixes([`<@${client.user.id}> `, `<@!${client.user.id}> `, process.env.PREFIX]);
 
 	if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true' || process.env.YOUTUBE_BOT_AVATAR_SYNC === 'true') {
@@ -181,13 +182,8 @@ async function checkYouTubeAvatar() {
 
 		// update guild icons
 		if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true') {
-			const guildIds = process.env.ICON_SYNC_GUILDS.split(',');
-			for (const guildId of guildIds) {
-				const guild = client.guilds.get(guildId);
-				if (!guild) {
-					logger.warn(`Bot is not in guild ${guildId}, skipping`);
-					continue;
-				}
+			const enabledGuilds = await GuildConfig.find({youtubeGuildIconSync: true}).exec();
+			for (const guild of enabledGuilds.map(e => client.guilds.get(e.guildId)).filter(e => e)) {
 				try {
 					await guild.setIcon(avatarBuffer, `Syncing guild icon with YouTube Channel "${channelName}"`);
 					logger.verbose(`Changed guild icon for "${guild.name}" (${guild.id})`);
