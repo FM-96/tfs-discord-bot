@@ -46,7 +46,7 @@ module.exports = {
 			return;
 		}
 
-		const lastMessages = await message.channel.fetchMessages({before: message.id});
+		const lastMessages = await suggestionChannel.fetchMessages({before: message.id});
 		const lastSuggestion = lastMessages.find(isValidSuggestion);
 		const suggestionId = lastSuggestion ? Number(lastSuggestion.embeds[0].title.split('#')[1]) + 1 || 1 : 1;
 
