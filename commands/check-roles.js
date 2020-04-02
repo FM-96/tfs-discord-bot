@@ -75,8 +75,17 @@ module.exports = {
 				messageText += `Fixed ${results.wrongRoles.length} ${results.wrongRoles.length === 1 ? 'person' : 'people'} that had wrong roles.\n`;
 				for (const entry of results.wrongRoles) {
 					const member = message.guild.members.get(entry.id);
-					await member.addRoles(entry.add);
-					await member.removeRoles(entry.remove);
+					const targetRoles = member.roles.clone();
+					if (entry.add.length) {
+						for (const role of entry.add) {
+							targetRoles.set(role.id, role);
+						}
+					}
+					if (entry.remove.length) {
+						targetRoles.sweep(e => entry.remove.some(f => e.id === f.id));
+					}
+
+					await member.setRoles(targetRoles);
 				}
 			}
 			await message.channel.send(messageText);

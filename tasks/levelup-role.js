@@ -43,16 +43,22 @@ module.exports = {
 		}
 		const rolesToAdd = highestReachedRoles.filter(e => !member.roles.has(e.id));
 		const rolesToRemove = otherRoles.filter(e => member.roles.has(e.id));
-		if (rolesToAdd.length) {
-			await member.addRoles(rolesToAdd);
-		}
-		if (rolesToRemove.length) {
-			await member.removeRoles(rolesToRemove);
-		}
 
 		if (!(rolesToAdd.length || rolesToRemove.length)) {
 			return;
 		}
+
+		const targetRoles = member.roles.clone();
+		if (rolesToAdd.length) {
+			for (const role of rolesToAdd) {
+				targetRoles.set(role.id, role);
+			}
+		}
+		if (rolesToRemove.length) {
+			targetRoles.sweep(e => rolesToRemove.some(f => e.id === f.id));
+		}
+
+		await member.setRoles(targetRoles);
 
 		const loggingChannel = config.loggingChannel;
 		if (loggingChannel) {
