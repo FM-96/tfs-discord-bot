@@ -24,19 +24,18 @@ const levelUpRole = mongoose.Schema({
 const schema = mongoose.Schema({
 	guildId: String,
 	// prefixes: [String],
-	// TODO add better role support to command handler
-	// modRoles: {
-	// 	type: [{
-	// 		type: String,
-	// 		validate: {
-	// 			validator: v => /^\d+$/.test(v),
-	// 			message: 'Must be a valid role ID.',
-	// 		},
-	// 		get: getRole,
-	// 		set: setRole,
-	// 	}],
-	// 	set: setArray,
-	// },
+	modRoles: {
+		type: [{
+			type: String,
+			validate: {
+				validator: v => /^\d+$/.test(v),
+				message: 'Must be a valid role ID.',
+			},
+			// get: getRole, // does not work, see https://github.com/Automattic/mongoose/issues/4964
+			set: setRole,
+		}],
+		set: setArray,
+	},
 	youtubeGuildIconSync: {
 		type: Boolean,
 		default: false,

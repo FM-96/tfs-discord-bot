@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 const commandHandler = require('./commandHandler.js');
+const {getGuildConfig} = require('./guildConfigManager.js');
 const GuildConfig = require('./models/GuildConfig.js');
 const reactionHandler = require('./reactionHandler.js');
 const rememberRoles = require('./rememberRoles.js');
@@ -18,7 +19,7 @@ const youtube = require('./youtube.js');
 
 commandHandler.setOwnerId(process.env.OWNER_ID);
 commandHandler.setGlobalPrefixes(false);
-// FIXME commandHandler.setAdminRoleName(process.env.ADMIN_ROLE);
+commandHandler.setModRoleGetter(getModRoles);
 
 // register commands
 try {
@@ -206,4 +207,9 @@ async function checkYouTubeAvatar() {
 		logger.error('Error while checking YouTube channel:');
 		logger.error(err);
 	}
+}
+
+async function getModRoles(guildId) {
+	const config = await getGuildConfig(guildId);
+	return config.modRoles;
 }
