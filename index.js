@@ -11,8 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 const commandHandler = require('./commandHandler.js');
-const {getGuildConfig} = require('./guildConfigManager.js');
-const GuildConfig = require('./models/GuildConfig.js');
+const {getGuildConfig, getYoutubeGuildIconSyncEnabled} = require('./guildConfigManager.js');
 const reactionHandler = require('./reactionHandler.js');
 const rememberRoles = require('./rememberRoles.js');
 const youtube = require('./youtube.js');
@@ -183,7 +182,7 @@ async function checkYouTubeAvatar() {
 
 		// update guild icons
 		if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true') {
-			const enabledGuilds = await GuildConfig.find({youtubeGuildIconSync: true}).exec();
+			const enabledGuilds = await getYoutubeGuildIconSyncEnabled();
 			for (const guild of enabledGuilds.map(e => client.guilds.get(e.guildId)).filter(e => e)) {
 				try {
 					await guild.setIcon(avatarBuffer, `Syncing guild icon with YouTube Channel "${channelName}"`);

@@ -1,5 +1,7 @@
 module.exports = {
 	getGuildConfig,
+	getRememberRolesEnabled,
+	getYoutubeGuildIconSyncEnabled,
 };
 
 const GuildConfig = require('./models/GuildConfig.js');
@@ -16,4 +18,12 @@ async function getGuildConfig(guildId) {
 		await config.save();
 	}
 	return config;
+}
+
+async function getRememberRolesEnabled() {
+	return GuildConfig.find({rememberRoles: true}).exec();
+}
+
+async function getYoutubeGuildIconSyncEnabled() {
+	return GuildConfig.find({youtubeGuildIconSync: true}).exec();
 }

@@ -7,14 +7,13 @@ module.exports = {
 const Discord = require('discord.js');
 const logger = require('winston').loggers.get('default');
 
-const {getGuildConfig} = require('./guildConfigManager.js');
-const GuildConfig = require('./models/GuildConfig.js');
+const {getGuildConfig, getRememberRolesEnabled} = require('./guildConfigManager.js');
 const MemberRoles = require('./models/MemberRoles.js');
 
 async function updateDatabase(client) {
 	// update member roles database
 	logger.debug('Updating member roles database');
-	const enabledGuilds = await GuildConfig.find({rememberRoles: true}).exec();
+	const enabledGuilds = await getRememberRolesEnabled();
 	const saveOps = [];
 	for (const guild of enabledGuilds.map(e => client.guilds.get(e.guildId)).filter(e => e)) {
 		await guild.fetchMembers();
