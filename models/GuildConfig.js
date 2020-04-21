@@ -107,7 +107,6 @@ const schema = mongoose.Schema({
 			validator: v => new RegExp(v),
 			message: 'Must be a valid regular expression.',
 		},
-		// TODO getter to get it as RexExp?
 	},
 	levelUpExcludedRoles: {
 		type: [{
