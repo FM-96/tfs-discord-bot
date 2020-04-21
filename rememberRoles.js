@@ -1,5 +1,6 @@
 module.exports = {
 	updateDatabase,
+	updateGuild,
 	memberAdd,
 	memberUpdate,
 };
@@ -14,30 +15,35 @@ async function updateDatabase(client) {
 	// update member roles database
 	logger.debug('Updating member roles database');
 	const enabledGuilds = await getRememberRolesEnabled();
-	const saveOps = [];
 	for (const guild of enabledGuilds.map(e => client.guilds.get(e.guildId)).filter(e => e)) {
-		await guild.fetchMembers();
-		let docs = await MemberRoles.find({guildId: guild.id}).exec();
+		await updateGuild(guild);
+	}
+	logger.info('Finished updating member roles database');
+}
 
-		// don't change documents of members that aren't in the server
-		docs = docs.filter(e => guild.member(e.userId));
+async function updateGuild(guild) {
+	await guild.fetchMembers();
+	let docs = await MemberRoles.find({guildId: guild.id}).exec();
 
-		// create documents for not yet saved members
-		const newMembers = guild.members.array().filter(e => !e.user.bot && e.roles.size && !docs.find(d => d.userId === e.user.id));
-		for (const newMember of newMembers) {
-			docs.push(new MemberRoles({guildId: guild.id, userId: newMember.user.id, roleIds: []}));
-		}
+	// don't change documents of members that aren't in the server
+	docs = docs.filter(e => guild.member(e.userId));
 
-		for (const doc of docs) {
-			const memberRoleIds = guild.member(doc.userId).roles.filter(r => !r.managed && r.id !== r.guild.id).map(r => r.id).sort();
-			if (memberRoleIds.join() !== doc.roleIds.join()) {
-				doc.roleIds = memberRoleIds;
-				saveOps.push(doc.save());
-			}
+	// create documents for not yet saved members
+	const newMembers = guild.members.array().filter(e => !e.user.bot && e.roles.size && !docs.find(d => d.userId === e.user.id));
+	for (const newMember of newMembers) {
+		docs.push(new MemberRoles({guildId: guild.id, userId: newMember.user.id, roleIds: []}));
+	}
+
+	const saveOps = [];
+	for (const doc of docs) {
+		const memberRoleIds = guild.member(doc.userId).roles.filter(r => !r.managed && r.id !== r.guild.id).map(r => r.id).sort();
+		if (memberRoleIds.join() !== doc.roleIds.join()) {
+			doc.roleIds = memberRoleIds;
+			saveOps.push(doc.save());
 		}
 	}
-	await Promise.all(saveOps);
-	logger.info('Finished updating member roles database');
+
+	return Promise.all(saveOps);
 }
 
 async function memberAdd(member) {

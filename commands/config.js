@@ -1,4 +1,5 @@
 const {getGuildConfig} = require('../guildConfigManager.js');
+const {updateGuild} = require('../rememberRoles.js');
 
 module.exports = {
 	command: 'config',
@@ -36,14 +37,20 @@ module.exports = {
 			return;
 		}
 
+		const oldValue = config[key];
 		config[key] = data;
+		const newValue = config[key];
 		try {
 			await config.save();
-			await message.reply(`"${key}" successfully set.`);
 		} catch (err) {
 			await message.reply(`could not set "${key}":\n\`\`\`\n${err.message}\n\`\`\``);
+			return;
 		}
 
-		// TODO index guild on rememberRoles change
+		await message.reply(`"${key}" successfully set.`);
+
+		if (key === 'rememberRoles' && oldValue === false && newValue === true) {
+			await updateGuild(message.guild);
+		}
 	},
 };
