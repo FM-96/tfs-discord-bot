@@ -52,5 +52,10 @@ module.exports = {
 		if (key === 'rememberRoles' && oldValue === false && newValue === true) {
 			await updateGuild(message.guild);
 		}
+
+		if (key === 'youtubeGuildIconSync' && oldValue === false && newValue === true) {
+			config.youtubeAvatarHash = '';
+			await config.save();
+		}
 	},
 };

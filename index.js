@@ -7,10 +7,10 @@ const logger = require('winston').loggers.get('default');
 const mongoose = require('mongoose');
 
 const crypto = require('crypto');
-const fs = require('fs');
 const path = require('path');
 
 const commandHandler = require('./commandHandler.js');
+const {getBotConfig, loadBotConfig} = require('./botConfigManager.js');
 const {getGuildConfig, getYoutubeGuildIconSyncEnabled} = require('./guildConfigManager.js');
 const reactionHandler = require('./reactionHandler.js');
 const rememberRoles = require('./rememberRoles.js');
@@ -136,11 +136,14 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 	}
 });
 
-mongoose.connect(process.env.MONGODB, {useNewUrlParser: true, useUnifiedTopology: true}).then(() => client.login(process.env.BOT_TOKEN)).catch(err => {
-	logger.fatal('Error logging in:');
-	logger.fatal(err);
-	process.exit(1);
-});
+mongoose.connect(process.env.MONGODB, {useNewUrlParser: true, useUnifiedTopology: true})
+	.then(() => loadBotConfig())
+	.then(() => client.login(process.env.BOT_TOKEN))
+	.catch(err => {
+		logger.fatal('Error logging in:');
+		logger.fatal(err);
+		process.exit(1);
+	});
 
 async function checkYouTubeAvatar() {
 	try {
@@ -163,29 +166,21 @@ async function checkYouTubeAvatar() {
 		const avatarHash = crypto.createHash('sha1').update(avatarBuffer).digest('hex');
 		logger.debug(`sha1: ${avatarHash}`);
 
-		// compare to saved hash
-		let lastAvatarHash;
-		try {
-			lastAvatarHash = fs.readFileSync(path.join(__dirname, 'lastAvatarHash.txt'), 'utf8');
-		} catch (err) {
-			// it's not a problem if the file doesn't exist
-			if (err.code !== 'ENOENT') {
-				throw err;
-			}
-		}
-		if (avatarHash === lastAvatarHash) {
-			logger.debug(`Avatar not changed for YouTube channel "${channelName}"`);
-			return;
-		}
-		fs.writeFileSync(path.join(__dirname, 'lastAvatarHash.txt'), avatarHash);
-		logger.info(`Changed avatar detected for YouTube channel "${channelName}"`);
-
 		// update guild icons
 		if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true') {
 			const enabledGuilds = await getYoutubeGuildIconSyncEnabled();
-			for (const guild of enabledGuilds.map(e => client.guilds.get(e.guildId)).filter(e => e)) {
+			for (const config of enabledGuilds) {
+				const guild = client.guilds.get(config.guildId);
+				if (!guild) {
+					continue;
+				}
+				if (avatarHash === config.youtubeAvatarHash) {
+					continue;
+				}
 				try {
 					await guild.setIcon(avatarBuffer, `Syncing guild icon with YouTube Channel "${channelName}"`);
+					config.youtubeAvatarHash = avatarHash;
+					await config.save();
 					logger.verbose(`Changed guild icon for "${guild.name}" (${guild.id})`);
 				} catch (err) {
 					if (err.message === 'Missing Permissions') {
@@ -199,8 +194,11 @@ async function checkYouTubeAvatar() {
 
 		// update bot avatar
 		if (process.env.YOUTUBE_BOT_AVATAR_SYNC === 'true') {
-			await client.user.setAvatar(avatarBuffer);
-			logger.verbose('Changed bot avatar');
+			const config = getBotConfig();
+			if (avatarHash !== config.youtubeAvatarHash) {
+				await client.user.setAvatar(avatarBuffer);
+				logger.verbose('Changed bot avatar');
+			}
 		}
 	} catch (err) {
 		logger.error('Error while checking YouTube channel:');

@@ -40,8 +40,7 @@ const schema = mongoose.Schema({
 		type: Boolean,
 		default: false,
 	},
-	// TODO use
-	youtubeGuildIconHash: String,
+	youtubeAvatarHash: String,
 	rememberRoles: {
 		type: Boolean,
 		default: false,
@@ -135,7 +134,7 @@ schema.set('toJSON', {
 	transform: (doc, ret, options) => {
 		delete ret._id;
 		delete ret.guildId;
-		delete ret.youtubeGuildIconHash;
+		delete ret.youtubeAvatarHash;
 		return ret;
 	},
 });
