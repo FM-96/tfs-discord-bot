@@ -47,12 +47,12 @@ async function updateGuild(guild) {
 }
 
 async function memberAdd(member) {
-	const config = await getGuildConfig(member.guild.id);
-	if (!config.rememberRoles) {
+	if (member.user.bot) {
 		return;
 	}
 
-	if (member.user.bot) {
+	const config = await getGuildConfig(member.guild.id);
+	if (!config.rememberRoles) {
 		return;
 	}
 
@@ -84,12 +84,12 @@ async function memberAdd(member) {
 }
 
 async function memberUpdate(oldMember, newMember) {
-	const config = await getGuildConfig(newMember.guild.id);
-	if (!config.rememberRoles) {
+	if (newMember.user.bot) {
 		return;
 	}
 
-	if (newMember.user.bot) {
+	const config = await getGuildConfig(newMember.guild.id);
+	if (!config.rememberRoles) {
 		return;
 	}
 
