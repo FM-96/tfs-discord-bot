@@ -65,6 +65,8 @@ module.exports = {
  * Context passed to a command when it is run
  * @typedef {Object} CommandContext
  * @property {Number} argsOffset The index of where in the message the command's arguments start
+ * @property {String} args The command's arguments string
+ * @property {Array<String>} argv List of the command's arguments when split by spaces
  * @property {String} command The alias used to trigger the command
  * @property {String} prefix The prefix used to trigger the command
  * @property {Command} commandObj The command
@@ -121,9 +123,13 @@ async function checkCommand(message) {
 					const checks = await checkCommandPermissions(commandObj, message);
 
 					if (checks.passChecks) {
+						const argsOffset = commandVariation.length + prefix.length;
+						const args = message.content.slice(argsOffset).trim();
 						/** @type {CommandContext} */
 						const commandContext = {
-							argsOffset: commandVariation.length + prefix.length,
+							argsOffset,
+							args,
+							argv: args ? args.split(/ +/) : [],
 							command: commandVariation,
 							prefix: prefix,
 							commandObj,
