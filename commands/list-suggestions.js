@@ -4,8 +4,12 @@ const {getGuildConfig} = require('../guildConfigManager.js');
 module.exports = {
 	command: 'list-suggestions',
 	aliases: [],
-	description: null,
-	usage: null,
+	description: 'List the suggestions made for the server.',
+	usage: `[all]
+	all
+		"all" to also show implemented and rejected
+		suggestions. Omit to only show open, closed, and
+		accepted suggestions.`,
 	ownerOnly: false,
 	adminOnly: false,
 	modOnly: false,

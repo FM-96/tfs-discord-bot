@@ -4,8 +4,8 @@ const {updateGuild} = require('../rememberRoles.js');
 module.exports = {
 	command: 'config',
 	aliases: [],
-	description: null,
-	usage: null,
+	description: 'Manage server configuration.',
+	usage: '[setting [value]]',
 	ownerOnly: false,
 	adminOnly: true,
 	modOnly: false,

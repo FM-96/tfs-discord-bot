@@ -10,8 +10,8 @@ const {CLOSED, OPEN} = require('../constants/suggestions.js').COLORS;
 module.exports = {
 	command: 'suggest',
 	aliases: [],
-	description: null,
-	usage: null,
+	description: 'Make a suggestion for the server.',
+	usage: '<suggestion>',
 	ownerOnly: false,
 	adminOnly: false,
 	modOnly: false,

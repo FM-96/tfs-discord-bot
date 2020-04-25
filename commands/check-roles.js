@@ -5,8 +5,11 @@ const {getGuildConfig} = require('../guildConfigManager.js');
 module.exports = {
 	command: 'check-roles',
 	aliases: [],
-	description: null,
-	usage: null,
+	description: 'Verify and/or correct wrongly assigned level-up roles.',
+	usage: `[fix]
+	fix
+		"fix" to fix incorrect roles. Omit to print
+		incorrect roles, but not change any.`,
 	ownerOnly: false,
 	adminOnly: true,
 	modOnly: false,

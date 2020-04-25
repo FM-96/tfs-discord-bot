@@ -7,8 +7,18 @@ const {getGuildConfig} = require('../guildConfigManager.js');
 module.exports = {
 	command: 'suggestion',
 	aliases: [],
-	description: null,
-	usage: null,
+	description: 'Edit and/or resolve a suggestion.',
+	usage: `<mode> <suggestion message ID> [text]
+	mode
+		e, edit
+			Edits the text of the suggestion. [text] is
+			required for this mode.
+		a, accepted
+		i, implemented
+		p, pending
+		r, rejected
+			Sets the suggestion to the corresponding status.
+			[text] is an optional reason/note.`,
 	ownerOnly: false,
 	adminOnly: true,
 	modOnly: false,

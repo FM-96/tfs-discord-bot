@@ -3,8 +3,8 @@ const logger = require('winston').loggers.get('default');
 module.exports = {
 	command: 'restart',
 	aliases: [],
-	description: null,
-	usage: null,
+	description: 'Restart the bot.',
+	usage: '',
 	ownerOnly: true,
 	adminOnly: false,
 	modOnly: false,

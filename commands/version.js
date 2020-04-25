@@ -3,8 +3,8 @@ const VERSION = 'v' + require('../package.json').version + (process.env.NODE_ENV
 module.exports = {
 	command: 'version',
 	aliases: [],
-	description: null,
-	usage: null,
+	description: 'Show the bot\'s version.',
+	usage: '',
 	ownerOnly: false,
 	adminOnly: false,
 	modOnly: false,

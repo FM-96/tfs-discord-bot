@@ -3,8 +3,8 @@ const EMOJI_LIMITS = require('../constants/emojiLimits.js');
 module.exports = {
 	command: 'list-emojis',
 	aliases: [],
-	description: null,
-	usage: null,
+	description: 'See all custom emojis of the server.',
+	usage: '',
 	ownerOnly: false,
 	adminOnly: false,
 	modOnly: false,
