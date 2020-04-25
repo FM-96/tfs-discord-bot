@@ -197,6 +197,8 @@ async function checkYouTubeAvatar() {
 			const config = getBotConfig();
 			if (avatarHash !== config.youtubeAvatarHash) {
 				await client.user.setAvatar(avatarBuffer);
+				config.youtubeAvatarHash = avatarHash;
+				await config.save();
 				logger.verbose('Changed bot avatar');
 			}
 		}
