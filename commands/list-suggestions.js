@@ -25,6 +25,8 @@ module.exports = {
 			return;
 		}
 
+		const showAll = context.args.toLowerCase().startsWith('all');
+
 		const messages = await getChannelHistory(suggestionChannel);
 		messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
@@ -34,26 +36,38 @@ module.exports = {
 		const rejectedSuggestions = messages.filter(e => isValidSuggestion(e) && e.embeds[0].color === COLORS.REJECTED);
 		const implementedSuggestions = messages.filter(e => isValidSuggestion(e) && e.embeds[0].color === COLORS.IMPLEMENTED);
 
+		const suggestionStates = [
+			{
+				title: 'Closed Suggestions',
+				list: closedSuggestions,
+				condition: () => true,
+			},
+			{
+				title: 'Accepted Suggestions',
+				list: acceptedSuggestions,
+				condition: () => true,
+			},
+			{
+				title: 'Open Suggestions',
+				list: openSuggestions,
+				condition: () => true,
+			},
+			{
+				title: 'Rejected Suggestions',
+				list: rejectedSuggestions,
+				condition: () => showAll,
+			},
+			{
+				title: 'Implemented Suggestions',
+				list: implementedSuggestions,
+				condition: () => showAll,
+			},
+		];
+
 		let text = '';
-		text += `**__Closed Suggestions:__** ${closedSuggestions.length}\n`;
-		text += closedSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
-		text += '\n';
-
-		text += `**__Accepted Suggestions:__** ${acceptedSuggestions.length}\n`;
-		text += acceptedSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
-		text += '\n';
-
-		text += `**__Open Suggestions:__** ${openSuggestions.length}\n`;
-		text += openSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
-		text += '\n';
-
-		if (message.content.slice(context.argsOffset).trim().toLowerCase().startsWith('all')) {
-			text += `**__Rejected Suggestions:__** ${rejectedSuggestions.length}\n`;
-			text += rejectedSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
-			text += '\n';
-
-			text += `**__Implemented Suggestions:__** ${implementedSuggestions.length}\n`;
-			text += implementedSuggestions.map((e, i) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
+		for (const state of suggestionStates.filter(e => e.condition())) {
+			text += `**__${state.title}:__** ${state.list.length}\n`;
+			text += state.list.map((e) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
 			text += '\n';
 		}
 
