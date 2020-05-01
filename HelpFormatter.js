@@ -62,6 +62,7 @@ class HelpFormatter {
 	async commandList(guild, options) {
 		const embed = await this._baseEmbed(guild);
 		embed.setTitle('Command List');
+		embed.setDescription(`Use \`${this._prefix}help [command]\` for more information on a command.`);
 		for (const category of commandCategories) {
 			if (category.condition(options)) {
 				let text = '';
