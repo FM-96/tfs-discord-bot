@@ -68,7 +68,18 @@ module.exports = {
 		let text = '';
 		for (const state of suggestionStates.filter(e => e.condition())) {
 			text += `**__${state.title}:__** ${state.list.length}\n`;
-			text += state.list.map((e) => `\`${e.embeds[0].title.split(' ')[1]}\` ${shorten(e.embeds[0].description)}\n${e.url}`).join('\n');
+			text += state.list.map((e) => {
+				let voteCount;
+				if (e.embeds[0].color !== COLORS.OPEN) {
+					const [up, neutral, down] = ['👍', '🤷', '👎'].map(f => {
+						const regex = new RegExp(`${f}: (\\d+)`);
+						const match = regex.exec(e.embeds[0].fields[1].value);
+						return match ? match[1] : '?';
+					});
+					voteCount = ` \`[${up}/${neutral}/${down}]\``;
+				}
+				return `\`${e.embeds[0].title.split(' ')[1]}\`${voteCount || ''} ${shorten(e.embeds[0].description)}\n${e.url}`;
+			}).join('\n');
 			text += '\n';
 		}
 
