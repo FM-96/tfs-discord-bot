@@ -31,6 +31,11 @@ module.exports = {
 
 		const config = await getGuildConfig(message.guild.id);
 
+		if (!config.levelUpEnabled) {
+			await message.channel.send(`${message.author}, level-up roles aren't enabled on this server.`);
+			return;
+		}
+
 		const results = {
 			excluded: [],
 			wrongRoles: [],
