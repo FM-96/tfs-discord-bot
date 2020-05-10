@@ -46,13 +46,20 @@ module.exports = {
 			return;
 		}
 
-		const lastMessages = await suggestionChannel.fetchMessages({before: message.id});
-		const lastSuggestion = lastMessages.find(isValidSuggestion);
-		const suggestionId = lastSuggestion ? Number(lastSuggestion.embeds[0].title.split('#')[1]) + 1 || 1 : 1;
+		let lastSuggestionId = config.suggestionCount;
+		if (!lastSuggestionId) {
+			const lastMessages = await suggestionChannel.fetchMessages({before: message.id});
+			const lastSuggestion = lastMessages.find(isValidSuggestion);
+			lastSuggestionId = lastSuggestion ? Number(lastSuggestion.embeds[0].title.split('#')[1]) || 0 : 0;
+		}
+
+		const newSuggestionId = lastSuggestionId + 1;
+		config.suggestionCount = newSuggestionId;
+		await config.save();
 
 		const embed = new Discord.RichEmbed()
 			.setColor(OPEN)
-			.setTitle(`Suggestion #${suggestionId}`)
+			.setTitle(`Suggestion #${newSuggestionId}`)
 			.setDescription(suggestionText)
 			.addField('Suggested by', `${message.author} ${message.author.tag}`)
 			.addField('Instructions', '👍 = I __**want**__ this to happen.\n🤷 = I __**don\'t care**__ whether this happens.\n👎 = I __**don\'t want**__ this to happen.', true)

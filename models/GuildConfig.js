@@ -123,6 +123,7 @@ const schema = mongoose.Schema({
 		type: [levelUpRole],
 		set: setLevelUpRoles,
 	},
+	suggestionCount: Number,
 });
 
 schema.virtual('settableKeys').get(function () {
@@ -135,6 +136,7 @@ schema.set('toJSON', {
 		delete ret._id;
 		delete ret.guildId;
 		delete ret.youtubeAvatarHash;
+		delete ret.suggestionCount;
 		return ret;
 	},
 });
