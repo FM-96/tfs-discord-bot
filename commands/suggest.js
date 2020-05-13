@@ -113,13 +113,16 @@ if (!module.exports.disabled) {
 					throw err;
 				}
 				const oldEmbed = message.embeds[0];
-				const results = {total: 0};
+				const results = {total: 0, caring: 0};
 				for (const reaction of message.reactions.array()) {
 					if (['👍', '🤷', '👎'].includes(reaction.emoji.name)) {
 						await reaction.fetchUsers();
 						const votes = reaction.users.filter(e => !e.bot);
 						results[reaction.emoji.name] = votes;
 						results.total += votes.size;
+						if (reaction.emoji.name !== '🤷') {
+							results.caring += votes.size;
+						}
 					}
 				}
 				// edit with vote results
@@ -127,7 +130,7 @@ if (!module.exports.disabled) {
 					.setTitle(oldEmbed.title)
 					.setDescription(oldEmbed.description)
 					.addField('Suggested by', oldEmbed.fields[0].value)
-					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e].size} (${Math.round((results[e].size / results.total) * 10000) / 100}%)`).join('\n') + `\nTotal votes: ${results.total}`, true)
+					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e].size} (${Math.round((results[e].size / results.total) * 10000) / 100}%)${e !== '🤷' ? ` [${Math.round((results[e].size / results.caring) * 10000) / 100}%]` : ''}`).join('\n') + `\nTotal votes: ${results.total}`, true)
 					.setFooter('Votes closed at:')
 					.setTimestamp(oldEmbed.timestamp);
 
