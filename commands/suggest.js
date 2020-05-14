@@ -130,7 +130,7 @@ if (!module.exports.disabled) {
 					.setTitle(oldEmbed.title)
 					.setDescription(oldEmbed.description)
 					.addField('Suggested by', oldEmbed.fields[0].value)
-					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e].size} (${Math.round((results[e].size / results.total) * 10000) / 100}%)${e !== '🤷' ? ` [${Math.round((results[e].size / results.caring) * 10000) / 100}%]` : ''}`).join('\n') + `\nTotal votes: ${results.total}`, true)
+					.addField('Results', ['👍', '🤷', '👎'].map(e => `${e}: ${results[e].size} (${(Math.round((results[e].size / results.total) * 10000) / 100) || 0}%)${e !== '🤷' ? ` [${(Math.round((results[e].size / results.caring) * 10000) / 100) || 0}%]` : ''}`).join('\n') + `\nTotal votes: ${results.total}`, true)
 					.setFooter('Votes closed at:')
 					.setTimestamp(oldEmbed.timestamp);
 
