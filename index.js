@@ -1,6 +1,7 @@
 require('dotenv').config();
 require('./configureLogger.js');
 
+const commandHandler = require('command-handler');
 const Discord = require('discord.js');
 const got = require('got');
 const logger = require('winston').loggers.get('default');
@@ -9,7 +10,6 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const path = require('path');
 
-const commandHandler = require('./commandHandler.js');
 const {getBotConfig, loadBotConfig} = require('./botConfigManager.js');
 const {getGuildConfig, getYoutubeGuildIconSyncEnabled} = require('./guildConfigManager.js');
 const reactionHandler = require('./reactionHandler.js');

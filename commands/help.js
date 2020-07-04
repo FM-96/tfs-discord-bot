@@ -1,4 +1,4 @@
-const {getCommands} = require('../commandHandler.js');
+const {getCommands} = require('command-handler');
 
 const {getGuildConfig} = require('../guildConfigManager.js');
 const HelpFormatter = require('../HelpFormatter.js');
