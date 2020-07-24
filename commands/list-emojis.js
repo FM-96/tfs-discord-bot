@@ -15,13 +15,15 @@ module.exports = {
 	allowSelf: false,
 	run: async (message, context) => {
 		const placeholder = message.client.emojis.get(process.env.PLACEHOLDER_EMOJI);
+		const locked = message.client.emojis.get(process.env.LOCKED_EMOJI);
+
 		const maxEmojis = EMOJI_LIMITS[message.guild.premiumTier];
 
 		const guildEmojis = message.guild.emojis.filter(e => !e.animated);
 		const guildAniEmojis = message.guild.emojis.filter(e => e.animated);
 
-		const emojis = guildEmojis.array().concat(Array(maxEmojis - guildEmojis.size).fill(placeholder)).map(e => String(e));
-		const aniEmojis = guildAniEmojis.array().concat(Array(maxEmojis - guildAniEmojis.size).fill(placeholder)).map(e => String(e));
+		const emojis = guildEmojis.array().map(e => (e.available ? e : locked)).concat(Array(Math.max(maxEmojis - guildEmojis.size, 0)).fill(placeholder)).map(e => String(e));
+		const aniEmojis = guildAniEmojis.array().map(e => (e.available ? e : locked)).concat(Array(Math.max(maxEmojis - guildAniEmojis.size, 0)).fill(placeholder)).map(e => String(e));
 
 		await message.channel.send(`__**Emojis**__\n${guildEmojis.size}/${maxEmojis} used`);
 		for (let i = 0; i < emojis.length; i += 20) {
