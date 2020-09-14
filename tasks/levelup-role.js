@@ -34,21 +34,21 @@ module.exports = {
 		const highestReachedRoles = reached.filter(e => e.level === highestReachedLevel).map(e => e.role);
 		const otherRoles = config.levelUpRoles.filter(e => e.level !== highestReachedLevel).map(e => e.role);
 
-		const user = await message.client.fetchUser(userId);
-		const member = await message.guild.fetchMember(user);
+		const user = await message.client.users.fetch(userId);
+		const member = await message.guild.members.fetch(user);
 
-		if (config.levelUpExcludedRoles.some(e => member.roles.has(e))) {
-			await member.removeRoles(config.levelUpRoles.map(e => e.role).filter(e => member.roles.has(e.id)));
+		if (config.levelUpExcludedRoles.some(e => member.roles.cache.has(e))) {
+			await member.roles.remove(config.levelUpRoles.map(e => e.role).filter(e => member.roles.cache.has(e.id)));
 			return;
 		}
-		const rolesToAdd = highestReachedRoles.filter(e => !member.roles.has(e.id));
-		const rolesToRemove = otherRoles.filter(e => member.roles.has(e.id));
+		const rolesToAdd = highestReachedRoles.filter(e => !member.roles.cache.has(e.id));
+		const rolesToRemove = otherRoles.filter(e => member.roles.cache.has(e.id));
 
 		if (!(rolesToAdd.length || rolesToRemove.length)) {
 			return;
 		}
 
-		const targetRoles = member.roles.clone();
+		const targetRoles = member.roles.cache.clone();
 		if (rolesToAdd.length) {
 			for (const role of rolesToAdd) {
 				targetRoles.set(role.id, role);
@@ -58,11 +58,11 @@ module.exports = {
 			targetRoles.sweep(e => rolesToRemove.some(f => e.id === f.id));
 		}
 
-		await member.setRoles(targetRoles);
+		await member.roles.set(targetRoles);
 
 		const loggingChannel = config.loggingChannel;
 		if (loggingChannel) {
-			const embed = new Discord.RichEmbed()
+			const embed = new Discord.MessageEmbed()
 				.setAuthor(user.tag, user.avatarURL)
 				.setDescription(`${member} reached level ${newLevel}.\nAdded roles: ${rolesToAdd.join(', ')}\nRemoved roles: ${rolesToRemove.join(', ')}`)
 				.setColor(member.displayColor)

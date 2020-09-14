@@ -144,19 +144,19 @@ schema.set('toJSON', {
 module.exports = mongoose.model('GuildConfig', schema, 'guildConfigs');
 
 function getChannel(v) {
-	const guild = global.client.guilds.get(this.guildId);
+	const guild = global.client.guilds.cache.get(this.guildId);
 	if (!guild) {
 		return null;
 	}
-	return guild.channels.get(v);
+	return guild.channels.cache.get(v);
 }
 
 function getRole(v) {
-	const guild = global.client.guilds.get(this.guildId || this.parent().guildId);
+	const guild = global.client.guilds.cache.get(this.guildId || this.parent().guildId);
 	if (!guild) {
 		return null;
 	}
-	return guild.roles.get(v);
+	return guild.roles.cache.get(v);
 }
 
 function setChannel(v) {

@@ -42,8 +42,8 @@ module.exports = {
 		};
 
 		// iterate over all members
-		await message.guild.fetchMembers();
-		for (const member of message.guild.members.array()) {
+		await message.guild.members.fetch();
+		for (const member of message.guild.members.cache.array()) {
 			const memberLevel = leaderboard.get(member.id) || 0;
 
 			const reached = config.levelUpRoles.filter(e => e.level <= memberLevel);
@@ -51,15 +51,15 @@ module.exports = {
 			const highestReachedRoles = reached.filter(e => e.level === highestReachedLevel).map(e => e.role);
 			const otherRoles = config.levelUpRoles.filter(e => e.level !== highestReachedLevel).map(e => e.role);
 
-			if (config.levelUpExcludedRoles.some(e => member.roles.has(e))) {
-				const rolesToRemove = config.levelUpRoles.map(e => e.role).filter(e => member.roles.has(e.id));
+			if (config.levelUpExcludedRoles.some(e => member.roles.cache.has(e))) {
+				const rolesToRemove = config.levelUpRoles.map(e => e.role).filter(e => member.roles.cache.has(e.id));
 				if (rolesToRemove.length) {
 					results.excluded.push({id: member.id, level: memberLevel, remove: rolesToRemove});
 				}
 				continue;
 			}
-			const rolesToAdd = highestReachedRoles.filter(e => !member.roles.has(e.id));
-			const rolesToRemove = otherRoles.filter(e => member.roles.has(e.id));
+			const rolesToAdd = highestReachedRoles.filter(e => !member.roles.cache.has(e.id));
+			const rolesToRemove = otherRoles.filter(e => member.roles.cache.has(e.id));
 
 			if (rolesToAdd.length || rolesToRemove.length) {
 				results.wrongRoles.push({id: member.id, level: memberLevel, add: rolesToAdd, remove: rolesToRemove});
@@ -75,15 +75,15 @@ module.exports = {
 			if (results.excluded.length) {
 				messageText += `Fixed ${results.excluded.length} ${results.excluded.length === 1 ? 'person' : 'people'} that should have been excluded.\n`;
 				for (const entry of results.excluded) {
-					const member = message.guild.members.get(entry.id);
-					await member.removeRoles(entry.remove);
+					const member = message.guild.members.cache.get(entry.id);
+					await member.roles.remove(entry.remove);
 				}
 			}
 			if (results.wrongRoles.length) {
 				messageText += `Fixed ${results.wrongRoles.length} ${results.wrongRoles.length === 1 ? 'person' : 'people'} that had wrong roles.\n`;
 				for (const entry of results.wrongRoles) {
-					const member = message.guild.members.get(entry.id);
-					const targetRoles = member.roles.clone();
+					const member = message.guild.members.cache.get(entry.id);
+					const targetRoles = member.roles.cache.clone();
 					if (entry.add.length) {
 						for (const role of entry.add) {
 							targetRoles.set(role.id, role);
@@ -93,7 +93,7 @@ module.exports = {
 						targetRoles.sweep(e => entry.remove.some(f => e.id === f.id));
 					}
 
-					await member.setRoles(targetRoles);
+					await member.roles.set(targetRoles);
 				}
 			}
 			await message.channel.send(messageText);
@@ -105,12 +105,12 @@ module.exports = {
 			let messageText = '';
 			if (results.excluded.length) {
 				messageText += `${results.excluded.length} ${results.excluded.length === 1 ? 'person' : 'people'} should be excluded:\n`;
-				messageText += `\`\`\`\n${results.excluded.map(e => `${message.guild.members.get(e.id).user.tag} (${e.id}): ${e.remove.map(f => `-${f.name}`).join(', ')}`).join('\n\u200b')}\n\`\`\`\n`;
+				messageText += `\`\`\`\n${results.excluded.map(e => `${message.guild.members.cache.get(e.id).user.tag} (${e.id}): ${e.remove.map(f => `-${f.name}`).join(', ')}`).join('\n\u200b')}\n\`\`\`\n`;
 			}
 			if (results.wrongRoles.length) {
 				results.wrongRoles.sort((a, b) => b.level - a.level);
 				messageText += `${results.wrongRoles.length} ${results.wrongRoles.length === 1 ? 'person has' : 'people have'} wrong roles:\n`;
-				messageText += `\`\`\`\n${results.wrongRoles.map(e => `${message.guild.members.get(e.id).user.tag} (${e.id}) [lvl ${e.level}]: ${e.add.map(f => `+${f.name}`).concat(e.remove.map(f => `-${f.name}`)).join(', ')}`).join('\n\u200b')}\n\`\`\`\n`;
+				messageText += `\`\`\`\n${results.wrongRoles.map(e => `${message.guild.members.cache.get(e.id).user.tag} (${e.id}) [lvl ${e.level}]: ${e.add.map(f => `+${f.name}`).concat(e.remove.map(f => `-${f.name}`)).join(', ')}`).join('\n\u200b')}\n\`\`\`\n`;
 			}
 			await message.channel.send(messageText, {
 				split: {

@@ -29,8 +29,8 @@ module.exports = {
 		}
 
 		if (config.suggestionRoles.length) {
-			const member = await message.guild.fetchMember(message.author);
-			if (!config.suggestionRoles.some(e => member.roles.has(e))) {
+			const member = await message.guild.members.fetch(message.author);
+			if (!config.suggestionRoles.some(e => member.roles.cache.has(e))) {
 				await message.channel.send(`${message.author}, you don't have the required roles to use this command.`);
 				return;
 			}
@@ -48,7 +48,7 @@ module.exports = {
 
 		let lastSuggestionId = config.suggestionCount;
 		if (!lastSuggestionId) {
-			const lastMessages = await suggestionChannel.fetchMessages({before: message.id});
+			const lastMessages = await suggestionChannel.messages.fetch({before: message.id});
 			const lastSuggestion = lastMessages.find(isValidSuggestion);
 			lastSuggestionId = lastSuggestion ? Number(lastSuggestion.embeds[0].title.split('#')[1]) || 0 : 0;
 		}
@@ -57,7 +57,7 @@ module.exports = {
 		config.suggestionCount = newSuggestionId;
 		await config.save();
 
-		const embed = new Discord.RichEmbed()
+		const embed = new Discord.MessageEmbed()
 			.setColor(OPEN)
 			.setTitle(`Suggestion #${newSuggestionId}`)
 			.setDescription(suggestionText)
@@ -95,7 +95,7 @@ if (!module.exports.disabled) {
 			// find expired suggestions
 			const suggestions = await Suggestion.find({endTime: {$lt: Date.now()}}).exec();
 			for (const suggestion of suggestions) {
-				const channel = global.client.channels.get(suggestion.channelId);
+				const channel = global.client.channels.cache.get(suggestion.channelId);
 				if (!channel) {
 					logger.warn(`Channel ${suggestion.channelId} no longer accessible`);
 					await suggestion.remove();
@@ -103,7 +103,7 @@ if (!module.exports.disabled) {
 				}
 				let message;
 				try {
-					message = await channel.fetchMessage(suggestion.messageId);
+					message = await channel.messages.fetch(suggestion.messageId);
 				} catch (err) {
 					if (err.message === 'Unknown Message') {
 						logger.warn(`Suggestion message ${suggestion.messageId} has been deleted`);
@@ -114,10 +114,13 @@ if (!module.exports.disabled) {
 				}
 				const oldEmbed = message.embeds[0];
 				const results = {total: 0, caring: 0};
-				for (const reaction of message.reactions.array()) {
+				for (const reaction of message.reactions.cache.array()) {
 					if (['👍', '🤷', '👎'].includes(reaction.emoji.name)) {
-						await reaction.fetchUsers();
-						const votes = reaction.users.filter(e => !e.bot);
+						if (reaction.partial) {
+							await reaction.fetch();
+						}
+						await reaction.users.fetch();
+						const votes = reaction.users.cache.filter(e => !e.bot);
 						results[reaction.emoji.name] = votes;
 						results.total += votes.size;
 						if (reaction.emoji.name !== '🤷') {
@@ -126,7 +129,7 @@ if (!module.exports.disabled) {
 					}
 				}
 				// edit with vote results
-				const newEmbed = new Discord.RichEmbed()
+				const newEmbed = new Discord.MessageEmbed()
 					.setTitle(oldEmbed.title)
 					.setDescription(oldEmbed.description)
 					.addField('Suggested by', oldEmbed.fields[0].value)
@@ -143,7 +146,7 @@ if (!module.exports.disabled) {
 				}
 
 				await message.edit(newEmbed);
-				await message.clearReactions();
+				await message.reactions.removeAll();
 				await suggestion.remove();
 
 				const config = await getGuildConfig(message.guild.id);
@@ -178,9 +181,9 @@ if (!module.exports.disabled) {
 		const config = await getGuildConfig(reaction.message.guild.id);
 		// require necessary roles
 		if (config.suggestionRoles.length) {
-			const member = await reaction.message.guild.fetchMember(user);
-			if (!config.suggestionRoles.some(e => member.roles.has(e))) {
-				await reaction.remove(user);
+			const member = await reaction.message.guild.members.fetch(user);
+			if (!config.suggestionRoles.some(e => member.roles.cache.has(e))) {
+				await reaction.users.remove(user);
 			}
 		}
 		// allow only 1 reaction per message per user
@@ -190,12 +193,13 @@ if (!module.exports.disabled) {
 		} else {
 			filterFunc = e => e.emoji.id || e.emoji.name !== reaction.emoji.name;
 		}
-		const otherReactions = reaction.message.reactions.filter(filterFunc).array();
-		await Promise.all(otherReactions.map(e => e.fetchUsers()));
+		const otherReactions = reaction.message.reactions.cache.filter(filterFunc).array();
+		await Promise.all(otherReactions.map(e => (e.partial ? e.fetch() : e)));
+		await Promise.all(otherReactions.map(e => e.users.fetch()));
 		const removals = [];
 		for (const otherReaction of otherReactions) {
-			if (otherReaction.users.has(user.id)) {
-				removals.push(otherReaction.remove(user));
+			if (otherReaction.users.cache.has(user.id)) {
+				removals.push(otherReaction.users.remove(user));
 			}
 		}
 		await Promise.all(removals);

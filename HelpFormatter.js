@@ -78,8 +78,8 @@ class HelpFormatter {
 	}
 
 	async _baseEmbed(guild) {
-		const botMember = await guild.fetchMember(guild.client.user);
-		return new Discord.RichEmbed().setColor(botMember.displayColor || null);
+		const botMember = await guild.me;
+		return new Discord.MessageEmbed().setColor(botMember.displayColor || null);
 	}
 
 	_commandSort(a, b) {

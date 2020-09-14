@@ -101,7 +101,7 @@ async function getChannelHistory(channel) {
 		const options = {limit: 100};
 		options.before = lastMessage;
 
-		const messages = await channel.fetchMessages(options);
+		const messages = await channel.messages.fetch(options);
 		if (messages.size) {
 			result.push(...messages.values());
 			lastMessage = messages.lastKey();

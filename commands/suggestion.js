@@ -43,7 +43,7 @@ module.exports = {
 
 		let targetMessage;
 		try {
-			targetMessage = await suggestionChannel.fetchMessage(targetId);
+			targetMessage = await suggestionChannel.messages.fetch(targetId);
 		} catch (err) {
 			logger.error(err);
 			logger.error(err);
@@ -66,7 +66,7 @@ module.exports = {
 				return;
 			}
 			action = 'Suggestion edited:';
-			newEmbed = new Discord.RichEmbed()
+			newEmbed = new Discord.MessageEmbed()
 				.setColor(oldEmbed.color)
 				.setTitle(oldEmbed.title)
 				.setDescription(text)
@@ -81,7 +81,7 @@ module.exports = {
 			await targetMessage.edit(newEmbed);
 		} else if (['a', 'accepted'].includes(mode)) {
 			action = 'Suggestion accepted:';
-			newEmbed = new Discord.RichEmbed()
+			newEmbed = new Discord.MessageEmbed()
 				.setColor(COLORS.ACCEPTED)
 				.setTitle(oldEmbed.title)
 				.setDescription(oldEmbed.description)
@@ -93,7 +93,7 @@ module.exports = {
 			await targetMessage.edit(newEmbed);
 		} else if (['i', 'implemented'].includes(mode)) {
 			action = 'Suggestion implemented:';
-			newEmbed = new Discord.RichEmbed()
+			newEmbed = new Discord.MessageEmbed()
 				.setColor(COLORS.IMPLEMENTED)
 				.setTitle(oldEmbed.title)
 				.setDescription(oldEmbed.description)
@@ -105,7 +105,7 @@ module.exports = {
 			await targetMessage.edit(newEmbed);
 		} else if (['p', 'pending'].includes(mode)) {
 			action = 'Suggestion returned to pending:';
-			newEmbed = new Discord.RichEmbed()
+			newEmbed = new Discord.MessageEmbed()
 				.setColor(oldEmbed.fields[1].name === 'Instructions' ? COLORS.OPEN : COLORS.CLOSED)
 				.setTitle(oldEmbed.title)
 				.setDescription(oldEmbed.description)
@@ -116,7 +116,7 @@ module.exports = {
 			await targetMessage.edit(newEmbed);
 		} else if (['r', 'rejected'].includes(mode)) {
 			action = 'Suggestion rejected:';
-			newEmbed = new Discord.RichEmbed()
+			newEmbed = new Discord.MessageEmbed()
 				.setColor(COLORS.REJECTED)
 				.setTitle(oldEmbed.title)
 				.setDescription(oldEmbed.description)

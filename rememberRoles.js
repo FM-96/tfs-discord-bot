@@ -15,28 +15,28 @@ async function updateDatabase(client) {
 	// update member roles database
 	logger.debug('Updating member roles database');
 	const enabledGuilds = await getRememberRolesEnabled();
-	for (const guild of enabledGuilds.map(e => client.guilds.get(e.guildId)).filter(e => e)) {
+	for (const guild of enabledGuilds.map(e => client.guilds.cache.get(e.guildId)).filter(e => e)) {
 		await updateGuild(guild);
 	}
 	logger.info('Finished updating member roles database');
 }
 
 async function updateGuild(guild) {
-	await guild.fetchMembers();
+	await guild.members.fetch();
 	let docs = await MemberRoles.find({guildId: guild.id}).exec();
 
 	// don't change documents of members that aren't in the server
 	docs = docs.filter(e => guild.member(e.userId));
 
 	// create documents for not yet saved members
-	const newMembers = guild.members.array().filter(e => !e.user.bot && e.roles.size && !docs.find(d => d.userId === e.user.id));
+	const newMembers = guild.members.cache.array().filter(e => !e.user.bot && e.roles.cache.size && !docs.find(d => d.userId === e.user.id));
 	for (const newMember of newMembers) {
 		docs.push(new MemberRoles({guildId: guild.id, userId: newMember.user.id, roleIds: []}));
 	}
 
 	const saveOps = [];
 	for (const doc of docs) {
-		const memberRoleIds = guild.member(doc.userId).roles.filter(r => !r.managed && r.id !== r.guild.id).map(r => r.id).sort();
+		const memberRoleIds = guild.member(doc.userId).roles.cache.filter(r => !r.managed && r.id !== r.guild.id).map(r => r.id).sort();
 		if (memberRoleIds.join() !== doc.roleIds.join()) {
 			doc.roleIds = memberRoleIds;
 			saveOps.push(doc.save());
@@ -60,18 +60,18 @@ async function memberAdd(member) {
 	if (doc) {
 		const rolesToAdd = [];
 		for (const roleId of doc.roleIds) {
-			const role = member.guild.roles.get(roleId);
+			const role = member.guild.roles.cache.get(roleId);
 			if (role) {
 				rolesToAdd.push(role);
 			}
 		}
 		if (rolesToAdd.length) {
 			logger.info(`${member.user.username} (${member.user.id}) rejoined, re-adding ${rolesToAdd.length} roles`);
-			member.addRoles(rolesToAdd).catch(logger.error);
+			member.roles.add(rolesToAdd).catch(logger.error);
 
 			const loggingChannel = config.loggingChannel;
 			if (loggingChannel) {
-				const embed = new Discord.RichEmbed()
+				const embed = new Discord.MessageEmbed()
 					.setAuthor(member.user.tag, member.user.avatarURL)
 					.setDescription(`${member} rejoined and was given back the following roles: ${rolesToAdd.map(e => `__${e.name}__`).join(', ')}.`)
 					.setColor(0xCC00CC)
@@ -93,8 +93,8 @@ async function memberUpdate(oldMember, newMember) {
 		return;
 	}
 
-	const oldMemberRoles = oldMember.roles.filter(e => !e.managed && e.id !== e.guild.id).map(e => e.id).sort();
-	const newMemberRoles = newMember.roles.filter(e => !e.managed && e.id !== e.guild.id).map(e => e.id).sort();
+	const oldMemberRoles = oldMember.roles.cache.filter(e => !e.managed && e.id !== e.guild.id).map(e => e.id).sort();
+	const newMemberRoles = newMember.roles.cache.filter(e => !e.managed && e.id !== e.guild.id).map(e => e.id).sort();
 
 	if (oldMemberRoles.join() !== newMemberRoles.join()) {
 		let doc = await MemberRoles.findOne({guildId: newMember.guild.id, userId: newMember.user.id}).exec();

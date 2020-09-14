@@ -1,6 +1,6 @@
 {
   "name": "tfs-discord-bot",
-  "version": "0.12.5",
+  "version": "0.12.6",
   "description": "Discord bot for TheFlamingShark's Official Server.",
   "main": "index.js",
   "scripts": {
@@ -13,8 +13,8 @@
   "author": "Felix Müllner",
   "license": "MIT",
   "dependencies": {
-    "command-handler": "github:FM-96/command-handler#semver:0.6.x",
-    "discord.js": "^11.6.1",
+    "command-handler": "github:FM-96/command-handler#semver:0.7.x",
+    "discord.js": "^12.3.1",
     "dotenv": "^8.0.0",
     "googleapis": "^40.0.0",
     "got": "^10.6.0",

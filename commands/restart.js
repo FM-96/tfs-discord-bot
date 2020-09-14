@@ -15,7 +15,7 @@ module.exports = {
 	allowSelf: false,
 	run: async (message, context) => {
 		logger.info('Restarting via commmand');
-		await message.client.destroy();
+		message.client.destroy();
 		process.exit(2);
 	},
 };

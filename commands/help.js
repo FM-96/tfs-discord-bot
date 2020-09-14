@@ -23,7 +23,7 @@ module.exports = {
 		formatter = formatter || new HelpFormatter(process.env.PREFIX, getCommands());
 
 		const isAdmin = message.member.hasPermission('ADMINISTRATOR');
-		const isMod = isAdmin || message.member.roles.some(e => config.modRoles.includes(e.id));
+		const isMod = isAdmin || message.member.roles.cache.some(e => config.modRoles.includes(e.id));
 		const isOwner = message.author.id === process.env.OWNER_ID;
 
 		if (context.args) {
