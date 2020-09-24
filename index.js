@@ -159,7 +159,7 @@ async function checkYouTubeAvatar() {
 		if (process.env.YOUTUBE_GUILD_ICON_SYNC === 'true') {
 			const enabledGuilds = await getYoutubeGuildIconSyncEnabled();
 			for (const config of enabledGuilds) {
-				const guild = client.guilds.get(config.guildId);
+				const guild = client.guilds.cache.get(config.guildId);
 				if (!guild) {
 					continue;
 				}
