@@ -46,7 +46,6 @@ module.exports = {
 			targetMessage = await suggestionChannel.messages.fetch(targetId);
 		} catch (err) {
 			logger.error(err);
-			logger.error(err);
 			await message.channel.send(`${message.author}, can't find suggestion message.`);
 			return;
 		}
