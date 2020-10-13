@@ -22,9 +22,13 @@ module.exports = {
 	allowSelf: false,
 	run: async (message, context) => {
 		const config = await getGuildConfig(message.guild.id);
+		if (!config.suggestionsEnabled) {
+			await message.channel.send(`${message.author}, suggestions aren't enabled on this server.`);
+			return;
+		}
 		const suggestionChannel = config.suggestionChannel;
 		if (!suggestionChannel) {
-			await message.channel.send(`${message.author}, suggestions aren't enabled on this server.`);
+			await message.channel.send(`${message.author}, no suggestion channel is set up on this server.`);
 			return;
 		}
 

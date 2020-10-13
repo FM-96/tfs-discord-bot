@@ -55,6 +55,10 @@ const schema = mongoose.Schema({
 		get: getChannel,
 		set: setChannel,
 	},
+	suggestionsEnabled: {
+		type: Boolean,
+		default: false,
+	},
 	suggestionChannel: {
 		type: String,
 		default: null,

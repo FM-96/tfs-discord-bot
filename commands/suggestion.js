@@ -37,7 +37,7 @@ module.exports = {
 
 		const suggestionChannel = config.suggestionChannel;
 		if (!suggestionChannel) {
-			await message.channel.send(`${message.author}, suggestions aren't enabled on this server.`);
+			await message.channel.send(`${message.author}, no suggestion channel is set up on this server.`);
 			return;
 		}
 
