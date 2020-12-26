@@ -55,6 +55,18 @@ const schema = mongoose.Schema({
 		get: getChannel,
 		set: setChannel,
 	},
+	autoPublishChannels: {
+		type: [{
+			type: String,
+			validate: {
+				validator: v => /^\d+$/.test(v),
+				message: 'Must be a valid channel ID.',
+			},
+			// get: getChannel, // does not work, see https://github.com/Automattic/mongoose/issues/4964
+			set: setChannel,
+		}],
+		set: setArray,
+	},
 	suggestionsEnabled: {
 		type: Boolean,
 		default: false,
