@@ -7,9 +7,11 @@ const {getGuildConfig} = require('../guildConfigManager.js');
 module.exports = {
 	command: 'suggestion',
 	aliases: [],
-	description: 'Edit and/or resolve a suggestion.',
+	description: 'Show, edit and/or resolve a suggestion.',
 	usage: `<mode> <suggestion message ID> [text]
 	mode
+		s, show
+			Shows the suggestion. [text] is ignored.
 		e, edit
 			Edits the text of the suggestion. [text] is
 			required for this mode.
@@ -59,7 +61,9 @@ module.exports = {
 		let newEmbed;
 		let action = '';
 
-		if (['e', 'edit'].includes(mode)) {
+		if (['s', 'show'].includes(mode)) {
+			await message.channel.send(oldEmbed);
+		} else if (['e', 'edit'].includes(mode)) {
 			if (!text) {
 				await message.channel.send(`${message.author}, no text provided.`);
 				return;
@@ -126,7 +130,7 @@ module.exports = {
 				.setTimestamp(oldEmbed.timestamp);
 			await targetMessage.edit(newEmbed);
 		} else {
-			await message.channel.send(`${message.author}, invalid mode. Valid modes are: ${['edit', 'accepted', 'implemented', 'pending', 'rejected'].map(e => '`' + e + '`').join(', ')}.`);
+			await message.channel.send(`${message.author}, invalid mode. Valid modes are: ${['show', 'edit', 'accepted', 'implemented', 'pending', 'rejected'].map(e => '`' + e + '`').join(', ')}.`);
 			return;
 		}
 
