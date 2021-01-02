@@ -8,7 +8,7 @@ module.exports = {
 	command: 'suggestion',
 	aliases: [],
 	description: 'Show, edit and/or resolve a suggestion.',
-	usage: `<mode> <suggestion message ID> [text]
+	usage: `<mode> <suggestion number/message ID> [text]
 	mode
 		s, show
 			Shows the suggestion. [text] is ignored.
@@ -32,7 +32,7 @@ module.exports = {
 	run: async (message, context) => {
 		const args = message.content.slice(context.argsOffset).trim().split(' ');
 		const mode = args.shift().toLowerCase();
-		const targetId = args.shift();
+		const targetSuggestion = args.shift();
 		const text = args.join(' ');
 
 		const config = await getGuildConfig(message.guild.id);
@@ -45,14 +45,16 @@ module.exports = {
 
 		let targetMessage;
 		try {
-			targetMessage = await suggestionChannel.messages.fetch(targetId);
+			targetMessage = await getSuggestionMessage(suggestionChannel, targetSuggestion);
 		} catch (err) {
 			logger.error(err);
+		}
+		if (!targetMessage) {
 			await message.channel.send(`${message.author}, can't find suggestion message.`);
 			return;
 		}
 
-		if (targetMessage.author.id !== message.client.user.id || !targetMessage.embeds[0] || !targetMessage.embeds[0].title || !targetMessage.embeds[0].title.startsWith('Suggestion')) {
+		if (!isSuggestion(targetMessage)) {
 			await message.channel.send(`${message.author}, specified message is not a suggestion.`);
 			return;
 		}
@@ -144,3 +146,38 @@ module.exports = {
 		}
 	},
 };
+
+function isSuggestion(message) {
+	return message.author.id === message.client.user.id && message.embeds[0] && message.embeds[0].title && message.embeds[0].title.startsWith('Suggestion');
+}
+
+async function getSuggestionMessage(channel, targetSuggestion) {
+	const FETCH_LIMIT = 100;
+
+	const match = /^#?(\d+)$/.exec(targetSuggestion);
+	if (!match) {
+		return null;
+	}
+	const id = match[1];
+	let message;
+	if (!targetSuggestion.startsWith('#')) {
+		try {
+			message = await channel.messages.fetch(id);
+		} catch (err) {
+			// no-op
+		}
+	}
+	let lastFetched;
+	while (!message) {
+		const messages = await channel.messages.fetch({
+			limit: FETCH_LIMIT,
+			before: lastFetched,
+		});
+		lastFetched = messages.lastKey();
+		message = messages.find(e => isSuggestion(e) && e.embeds[0].title.startsWith(`Suggestion #${id}`));
+		if (messages.size < FETCH_LIMIT) {
+			break;
+		}
+	}
+	return message;
+}
