@@ -140,6 +140,30 @@ const schema = mongoose.Schema({
 		set: setLevelUpRoles,
 	},
 	suggestionCount: Number,
+	customRoleRoles: {
+		type: [{
+			type: String,
+			validate: {
+				validator: v => /^\d+$/.test(v),
+				message: 'Must be a valid role ID.',
+			},
+			// get: getRole, // does not work, see https://github.com/Automattic/mongoose/issues/4964
+			set: setRole,
+		}],
+		set: setArray,
+	},
+	customRoleIsAboveRoles: {
+		type: [{
+			type: String,
+			validate: {
+				validator: v => /^\d+$/.test(v),
+				message: 'Must be a valid role ID.',
+			},
+			// get: getRole, // does not work, see https://github.com/Automattic/mongoose/issues/4964
+			set: setRole,
+		}],
+		set: setArray,
+	},
 });
 
 schema.virtual('settableKeys').get(function () {
