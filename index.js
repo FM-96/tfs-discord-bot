@@ -62,6 +62,9 @@ client.once('ready', () => {
 	} else {
 		logger.debug('YouTube icon synchronization turned off');
 	}
+
+	setPresence();
+	setInterval(setPresence, 900000); // refresh presence every 15 minutes
 });
 
 client.on('ready', async () => {
@@ -200,4 +203,13 @@ async function checkYouTubeAvatar() {
 async function getModRoles(guildId) {
 	const config = await getGuildConfig(guildId);
 	return config.modRoles;
+}
+
+async function setPresence() {
+	try {
+		await client.user.setActivity(`${process.env.PREFIX} help`);
+	} catch (err) {
+		logger.error('Error while setting presence:');
+		logger.error(err);
+	}
 }
