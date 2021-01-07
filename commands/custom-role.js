@@ -12,9 +12,7 @@ module.exports = {
 	usage: `<hex color code> [new role name]
 	hex color code
 		Color code for the role, e.g. "ff0000" for red.
-		Note that roles can't be pure black.
-		Putting "000000" will instead delete the
-		custom role.
+		Put "delete" to delete your custom role.
 
 	new role name
 		What to rename the custom role to. If omitted,
@@ -42,12 +40,17 @@ module.exports = {
 			}
 		}
 
-		const match = /[a-f0-9]{6}/.exec(color.toLowerCase());
+		const match = /[a-f0-9]{6}|delete/.exec(color.toLowerCase());
 		if (!match) {
 			await message.channel.send(`${message.author}, invalid color code. Use a six-digit hex code, e.g. "ff0000" for red.`);
 			return;
 		}
 		const colorCode = match[0];
+
+		if (colorCode === '000000') {
+			await message.channel.send(`${message.author}, roles can't be colored pure black. Use a slightly different value such as e.g. "000001" instead.`);
+			return;
+		}
 
 		const customRolePosition = 1 + Math.max(...config.customRoleIsAboveRoles.map(e => message.guild.roles.cache.get(e)).filter(e => e).map(e => e.position));
 
@@ -61,7 +64,7 @@ module.exports = {
 				name: role.name,
 				color: role.color.toString(16).padStart(6, '0'),
 			};
-			if (colorCode === '000000') {
+			if (colorCode === 'delete') {
 				await role.delete(AUDIT_LOG_REASON);
 				await customRole.remove();
 			} else {
@@ -77,7 +80,7 @@ module.exports = {
 				await message.member.roles.add(role, AUDIT_LOG_REASON);
 			}
 		} else {
-			if (colorCode === '000000') {
+			if (colorCode === 'delete') {
 				if (customRole) {
 					await customRole.remove();
 				}
