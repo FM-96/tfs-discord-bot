@@ -6,6 +6,7 @@ const Discord = require('discord.js');
 const got = require('got');
 const logger = require('winston').loggers.get('default');
 const mongoose = require('mongoose');
+const express = require('express');
 
 const crypto = require('crypto');
 const path = require('path');
@@ -15,6 +16,7 @@ const {getGuildConfig, getYoutubeGuildIconSyncEnabled} = require('./guildConfigM
 const reactionHandler = require('./reactionHandler.js');
 const rememberRoles = require('./rememberRoles.js');
 const youtube = require('./youtube.js');
+const routes = require('./app/routes.js');
 
 commandHandler.setOwnerId(process.env.OWNER_ID);
 commandHandler.setGlobalPrefixes(false);
@@ -41,6 +43,9 @@ try {
 	logger.fatal(err);
 	process.exit(1);
 }
+
+const app = express();
+app.use(routes);
 
 const client = new Discord.Client({
 	partials: [
@@ -131,6 +136,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 mongoose.connect(process.env.MONGODB, {useNewUrlParser: true, useUnifiedTopology: true})
 	.then(() => loadBotConfig())
 	.then(() => client.login(process.env.BOT_TOKEN))
+	.then(() => app.listen(process.env.PORT))
 	.catch(err => {
 		logger.fatal('Error logging in:');
 		logger.fatal(err);
