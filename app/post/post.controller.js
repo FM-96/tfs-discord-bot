@@ -1,8 +1,26 @@
+const jwt = require('jsonwebtoken');
+
 module.exports = {
 	postFiles,
 };
 
 async function postFiles(req, res) {
+	let decoded;
+	try {
+		decoded = jwt.verify(req.body.jwt, process.env.JWT_SECRET, {algorithms: ['HS256']});
+	} catch (err) {
+		res.sendStatus(401);
+		return;
+	}
+	if (req.body.clear && !decoded.clear) {
+		res.sendStatus(401);
+		return;
+	}
+	if (req.files.map(e => e.fieldname).some(e => !decoded.channels.includes(e))) {
+		res.sendStatus(401);
+		return;
+	}
+
 	const guild = global.client.guilds.cache.get(req.params.guildId);
 	if (!guild) {
 		res.sendStatus(404);
